@@ -579,7 +579,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // ============================================
+                // ============================================
         // 🔥 تهيئة Firebase
         // ============================================
         const firebaseConfig = {
@@ -593,6 +593,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
         // ============================================
         // 🌍 نظام الترجمة متعدد اللغات (كامل)
@@ -1356,10 +1357,24 @@
         document.getElementById('adminBtn').addEventListener('click', () => { document.getElementById('adminPassword').value = ''; adminLoginModal.classList.add('show'); });
         document.getElementById('closeAdminLogin').addEventListener('click', () => { adminLoginModal.classList.remove('show'); });
         adminLoginModal.addEventListener('click', e => { if (e.target === adminLoginModal) adminLoginModal.classList.remove('show'); });
-        document.getElementById('adminLoginBtn').addEventListener('click', () => {
-            if (document.getElementById('adminPassword').value === adminPassword) {
-                adminLoginModal.classList.remove('show');
-                openAdminPanel();
+                document.getElementById('adminLoginBtn').addEventListener('click', async () => {
+            const pass = document.getElementById('adminPassword').value;
+            if (pass === adminPassword) {
+                // تسجيل دخول Google للأدمن
+                const provider = new firebase.auth.GoogleAuthProvider();
+                try {
+                    const result = await auth.signInWithPopup(provider);
+                    const email = result.user.email;
+                    if (email === 'eyadrmh@gmail.com') {
+                        adminLoginModal.classList.remove('show');
+                        openAdminPanel();
+                    } else {
+                        alert('❌ هذا الحساب ليس أدمن!');
+                        await auth.signOut();
+                    }
+                } catch (error) {
+                    alert('❌ فشل تسجيل دخول Google');
+                }
             } else { alert(translations[currentLang].wrongPassword); }
         });
         document.getElementById('adminPassword').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('adminLoginBtn').click(); });
@@ -1391,7 +1406,11 @@
             });
         }
 
-        async function deleteProvider(id) {
+                async function deleteProvider(id) {
+            if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
+                alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
+                return;
+            }
             if (confirm(translations[currentLang].confirmDelete)) {
                 await db.collection('providers').doc(id).delete();
                 await loadProvidersFromFirebase();
@@ -1399,7 +1418,11 @@
             }
         }
 
-        async function toggleVerify(id) {
+                async function toggleVerify(id) {
+            if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
+                alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
+                return;
+            }
             const p = serviceProviders.find(x => x.id === id);
             if (p) {
                 await db.collection('providers').doc(id).update({ verified: !p.verified });
@@ -1407,8 +1430,11 @@
                 updateAdminStats(); populateAdminTable();
             }
         }
-
-        async function togglePremium(id) {
+                async function togglePremium(id) {
+            if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
+                alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
+                return;
+            }
             const p = serviceProviders.find(x => x.id === id);
             if (p) {
                 await db.collection('providers').doc(id).update({ premium: !p.premium });
@@ -1439,8 +1465,13 @@
         document.getElementById('closeEditModal').addEventListener('click', () => { document.getElementById('editProviderModal').classList.remove('show'); });
         document.getElementById('editProviderModal').addEventListener('click', e => { if (e.target === document.getElementById('editProviderModal')) document.getElementById('editProviderModal').classList.remove('show'); });
 
-        document.getElementById('editProviderForm').addEventListener('submit', async function(e) {
+                document.getElementById('editProviderForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
+                alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
+                document.getElementById('editProviderModal').classList.remove('show');
+                return;
+            }
             const id = document.getElementById('editProviderId').value;
             if (!id) return;
             const cc = document.getElementById('editCountry').value;
@@ -1477,16 +1508,24 @@
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ineed_providers.csv'; a.click();
         });
 
-        document.getElementById('changePasswordBtn').addEventListener('click', async () => {
+                document.getElementById('changePasswordBtn').addEventListener('click', async () => {
+            if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
+                alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
+                return;
+            }
             const newPass = prompt('🔑 أدخل كلمة المرور الجديدة:');
             if (newPass && newPass.length >= 4) {
                 adminPassword = newPass;
-                await db.collection('settings').doc('admin').set({ password: newPass });
+                await db.collection('settings').doc('admin').update({ password: newPass });
                 alert(translations[currentLang].passwordChanged);
             } else if (newPass) { alert('❌ كلمة المرور يجب أن تكون 4 أحرف على الأقل.'); }
         });
 
-        document.getElementById('clearAllBtn').addEventListener('click', async () => {
+                document.getElementById('clearAllBtn').addEventListener('click', async () => {
+            if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
+                alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
+                return;
+            }
             if (confirm(translations[currentLang].confirmClearAll)) {
                 const snapshot = await db.collection('providers').get();
                 const batch = db.batch();
