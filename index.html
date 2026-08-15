@@ -66,7 +66,50 @@
         .logo span { font-weight: 700; }
         .tagline { text-align: center; font-size: 0.7rem; color: var(--muted); margin-top: -6px; }
 
-        .search-box { position: relative; }
+                .search-box { position: relative; }
+
+        .suggestions-list {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            background: var(--card);
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            margin-top: 5px;
+        }
+
+        .suggestions-list.show {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(233,69,96,0.1);
+            color: var(--accent);
+        }
+
+        .suggestion-icon {
+            font-size: 1rem;
+        }
         .search-box input {
             width: 100%; padding: 10px 38px 10px 12px; border-radius: 20px;
             border: 2px solid var(--border); background: var(--card); color: var(--text); font-size: 0.85rem; transition: all 0.3s;
@@ -317,9 +360,10 @@
             <div class="logo" id="logoText">أنا أحتاج إلى<span>...</span></div>
             <div class="tagline" id="tagline">أي خدمة، في أي مكان</div>
 
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="ماذا تحتاج؟">
+                        <div class="search-box">
+                <input type="text" id="searchInput" placeholder="ماذا تحتاج؟" autocomplete="off">
                 <span class="search-icon">🔍</span>
+                <div class="suggestions-list" id="suggestionsList"></div>
             </div>
 
             <div class="filter-group">
@@ -811,9 +855,30 @@
             }
         };
 
-        let currentLang = 'ar';
+                let currentLang = 'ar';
         let serviceProviders = [];
         let adminPassword = 'admin123';
+
+        // قائمة المهن المقترحة
+        const professionsList = [
+            'معلم', 'مدرس', 'أستاذ', 'محاضر', 'مدرب',
+            'دكتور', 'طبيب', 'ممرض', 'صيدلي', 'معالج',
+            'سباك', 'كهربائي', 'نجار', 'حداد', 'ميكانيكي',
+            'مبرمج', 'مطور', 'مصمم', 'مهندس', 'فني',
+            'حلاق', 'طباخ', 'خياط', 'منظف', 'سائق',
+            'محامي', 'محاسب', 'مترجم', 'مصور', 'كاتب',
+            'مدرس إنجليزي', 'مدرس رياضيات', 'مدرس فيزياء',
+            'مدرس كيمياء', 'مدرس عربي', 'مدرس علوم',
+            'طبيب أسنان', 'طبيب أطفال', 'طبيب جلدية',
+            'أخصائي تغذية', 'أخصائي نفسي', 'أخصائي علاج طبيعي',
+            'مهندس معماري', 'مهندس مدني', 'مهندس كهرباء',
+            'مهندس ميكانيك', 'مهندس برمجيات', 'مهندس شبكات',
+            'مصمم جرافيك', 'مصمم مواقع', 'مصمم داخلي',
+            'مطور ويب', 'مطور تطبيقات', 'مطور ألعاب',
+            'مسوق إلكتروني', 'مدير سوشيال ميديا', 'كاتب محتوى',
+            'خبير تجميل', 'مصفف شعر', 'أخصائي مساج',
+            'مدرب رياضي', 'مدرب لياقة', 'أخصائي تخاطب'
+        ];
 
         // ============================================
         // 🌍 بيانات الدول (ضع هنا بياناتك الكاملة)
@@ -1216,6 +1281,50 @@
             }
         }
 
+        function setupSuggestions() {
+            const searchInput = document.getElementById('searchInput');
+            const suggestionsList = document.getElementById('suggestionsList');
+            
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                
+                if (query.length < 1) {
+                    suggestionsList.classList.remove('show');
+                    suggestionsList.innerHTML = '';
+                    return;
+                }
+                
+                const matches = professionsList.filter(p => p.includes(query) || p.toLowerCase().includes(query));
+                
+                if (matches.length === 0) {
+                    suggestionsList.classList.remove('show');
+                    suggestionsList.innerHTML = '';
+                    return;
+                }
+                
+                suggestionsList.innerHTML = '';
+                matches.slice(0, 10).forEach(prof => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    item.innerHTML = `<span class="suggestion-icon">💼</span> ${prof}`;
+                    item.addEventListener('click', () => {
+                        searchInput.value = prof;
+                        suggestionsList.classList.remove('show');
+                        applyFilters();
+                    });
+                    suggestionsList.appendChild(item);
+                });
+                
+                suggestionsList.classList.add('show');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.search-box')) {
+                    suggestionsList.classList.remove('show');
+                }
+            });
+        }
+        
         function applyFilters() {
             const q = document.getElementById('searchInput').value.toLowerCase().trim();
             const country = countryFilter.value;
@@ -1694,8 +1803,9 @@
         // ============================================
         // بدء التشغيل
         // ============================================
-        async function init() {
+                async function init() {
             populateCountryFilter();
+            setupSuggestions();
             await loadProvidersFromFirebase();
             map.setView([25.0, 45.0], 4);
             console.log('✅ I need... v5.0 Firebase Ready!');
