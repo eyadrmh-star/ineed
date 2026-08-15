@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I need... - أي خدمة في أي مكان</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0f0f1a;
+            --panel: #1a1a2e;
+            --card: #16213e;
+            --accent: #e94560;
+            --text: #ffffff;
+            --muted: #a0a0a0;
+            --border: #2a2a4a;
+            --gold: #ffc107;
+            --green: #25D366;
+            --blue: #007bff;
+            --verified: #1da1f2;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --premium: #ffd700;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container { display: flex; height: 100vh; }
+        .left-panel {
+            width: 320px; min-width: 320px; background: var(--panel);
+            padding: 12px; display: flex; flex-direction: column; gap: 8px;
+            overflow-y: auto; border-right: 1px solid var(--border); z-index: 10;
+        }
+        .map-panel { flex: 1; position: relative; z-index: 1; }
+        #map { width: 100%; height: 100%; }
+        .right-panel {
+            width: 380px; min-width: 380px; background: var(--panel);
+            padding: 12px; display: flex; flex-direction: column; gap: 8px;
+            overflow-y: auto; border-left: 1px solid var(--border); z-index: 10;
+        }
+
+        .lang-bar { display: flex; gap: 5px; justify-content: center; padding: 4px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+        .lang-btn {
+            padding: 4px 8px; border-radius: 15px; border: 1px solid var(--border);
+            background: transparent; color: var(--muted); cursor: pointer; font-size: 0.7rem; transition: all 0.3s; white-space: nowrap;
+        }
+        .lang-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .lang-btn:hover { border-color: var(--accent); color: var(--text); }
+
+        .logo { font-size: 1.8rem; font-weight: 300; color: var(--accent); text-align: center; letter-spacing: 2px; }
+        .logo span { font-weight: 700; }
+        .tagline { text-align: center; font-size: 0.7rem; color: var(--muted); margin-top: -6px; }
+
+        .search-box { position: relative; }
+        .search-box input {
+            width: 100%; padding: 10px 38px 10px 12px; border-radius: 20px;
+            border: 2px solid var(--border); background: var(--card); color: var(--text); font-size: 0.85rem; transition: all 0.3s;
+        }
+        .search-box input:focus { outline: none; border-color: var(--accent); }
+        .search-box .search-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 1rem; }
+
+        .filter-group { display: flex; flex-direction: column; gap: 3px; }
+        .filter-group label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+        .filter-group select {
+            width: 100%; padding: 8px 6px; border-radius: 8px; border: 2px solid var(--border);
+            background: var(--card); color: var(--text); font-size: 0.8rem; cursor: pointer; transition: all 0.3s;
+        }
+        .filter-group select:focus { outline: none; border-color: var(--accent); }
+
+        .btn-row { display: flex; gap: 6px; }
+        .near-me-btn {
+            flex: 1; padding: 10px; border-radius: 20px; border: none;
+            background: linear-gradient(135deg, var(--accent), #c23152); color: white;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .near-me-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(233,69,96,0.5); }
+        .search-btn {
+            flex: 1; padding: 10px; border-radius: 20px; border: 2px solid var(--accent);
+            background: transparent; color: var(--accent); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .search-btn:hover { background: rgba(233,69,96,0.1); }
+
+        .register-section { border-top: 2px solid var(--accent); padding-top: 10px; margin-top: 3px; }
+        .register-title { text-align: center; font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+        .register-btn {
+            width: 100%; padding: 11px; border-radius: 20px; border: 2px dashed var(--accent);
+            background: rgba(233,69,96,0.05); color: var(--accent); font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.3s;
+        }
+        .register-btn:hover { background: rgba(233,69,96,0.15); border-style: solid; }
+
+        .bottom-btns { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+        .bottom-btn {
+            padding: 6px 12px; border-radius: 15px; border: 1px solid var(--border);
+            background: var(--card); color: var(--muted); font-size: 0.68rem; cursor: pointer; transition: all 0.3s; text-decoration: none;
+        }
+        .bottom-btn:hover { border-color: var(--accent); color: var(--text); }
+        .bottom-btn.admin-btn { border-color: var(--warning); color: var(--warning); }
+        .bottom-btn.admin-btn:hover { background: rgba(255,193,7,0.1); }
+
+        .visitor-counter { text-align: center; padding: 8px; background: var(--card); border-radius: 10px; font-size: 0.75rem; color: var(--muted); }
+        .visitor-counter .count { color: var(--accent); font-weight: 700; font-size: 1rem; }
+
+        .results-header { font-size: 0.78rem; color: var(--muted); padding: 6px 0; border-bottom: 1px solid var(--border); text-align: center; }
+        .results-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+
+        .service-card {
+            background: var(--card); border-radius: 12px; padding: 12px;
+            border-right: 3px solid var(--accent); cursor: pointer; transition: all 0.3s; position: relative;
+        }
+        .service-card:hover { background: #1e2d50; transform: translateX(-2px); }
+        .service-card.premium { border-right-color: var(--premium); }
+        .service-card .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .service-card .avatar {
+            width: 45px; height: 45px; border-radius: 50%; background: var(--accent);
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            font-weight: 700; color: white; flex-shrink: 0; overflow: hidden; border: 2px solid var(--accent);
+        }
+        .service-card .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .service-card .verified-badge {
+            position: absolute; top: 8px; left: 8px; background: var(--verified);
+            color: white; font-size: 0.6rem; padding: 2px 7px; border-radius: 8px; font-weight: 600;
+        }
+        .service-card .premium-badge {
+            position: absolute; top: 8px; right: 8px; background: var(--premium);
+            color: #000; font-size: 0.6rem; padding: 2px 7px; border-radius: 8px; font-weight: 700;
+        }
+        .service-card .name { font-weight: 600; font-size: 0.9rem; }
+        .service-card .professions { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0; }
+        .service-card .prof-tag {
+            background: rgba(233,69,96,0.2); color: var(--accent);
+            padding: 2px 8px; border-radius: 12px; font-size: 0.68rem; font-weight: 600;
+        }
+        .service-card .rating-row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+        .stars { color: var(--gold); font-size: 0.8rem; }
+        .review-count { color: var(--muted); font-size: 0.7rem; }
+        .service-card .details { display: flex; gap: 8px; font-size: 0.72rem; color: var(--muted); flex-wrap: wrap; margin: 3px 0; }
+        .service-card .working-hours { background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; color: var(--muted); margin: 3px 0; }
+        .service-card .phones-row { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0; }
+        .service-card .phone-tag { background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius: 12px; font-size: 0.68rem; color: var(--text); }
+        .contact-btns { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+        .contact-btn {
+            display: inline-block; padding: 5px 12px; border-radius: 15px; color: white;
+            font-size: 0.72rem; text-decoration: none; transition: all 0.3s; font-weight: 600;
+        }
+        .contact-btn.whatsapp { background: var(--green); }
+        .contact-btn.email { background: var(--blue); }
+        .contact-btn.rate { background: var(--gold); color: #000; }
+        .contact-btn.report { background: var(--danger); }
+        .contact-btn:hover { transform: scale(1.05); opacity: 0.9; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--panel); border-radius: 20px; padding: 20px; width: 550px;
+            max-width: 95%; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); position: relative;
+        }
+        .modal.large { width: 900px; }
+        .modal h3 { text-align: center; color: var(--accent); margin-bottom: 15px; font-size: 1.1rem; }
+        .modal .close-btn {
+            position: absolute; top: 8px; right: 12px; background: none; border: none;
+            color: var(--muted); font-size: 1.3rem; cursor: pointer;
+        }
+        .modal .close-btn:hover { color: var(--accent); }
+        .modal .form-row { display: flex; gap: 8px; }
+        .modal .form-group { margin-bottom: 10px; flex: 1; }
+        .modal .form-group label {
+            display: block; font-size: 0.7rem; color: var(--muted); margin-bottom: 3px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .modal .form-group input, .modal .form-group select, .modal .form-group textarea {
+            width: 100%; padding: 8px; border-radius: 8px; border: 2px solid var(--border);
+            background: var(--card); color: var(--text); font-size: 0.8rem; font-family: inherit;
+        }
+        .modal .form-group textarea { resize: vertical; min-height: 60px; }
+        .modal .submit-btn {
+            width: 100%; padding: 11px; border-radius: 20px; border: none; background: var(--accent);
+            color: white; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-top: 5px;
+        }
+        .modal .submit-btn:hover { background: #c23152; }
+        .modal .submit-btn.danger { background: var(--danger); }
+        .modal .submit-btn.success { background: var(--green); }
+        .modal .submit-btn.warning { background: var(--warning); color: #000; }
+        .modal .image-preview {
+            width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--accent);
+            margin: 8px auto; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; background: var(--card);
+        }
+        .modal .image-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; margin-top: 10px; }
+        .admin-table th {
+            background: var(--accent); color: white; padding: 8px 4px; text-align: center;
+            font-size: 0.65rem; position: sticky; top: 0;
+        }
+        .admin-table td { padding: 6px 4px; border-bottom: 1px solid var(--border); text-align: center; }
+        .admin-table tr:hover { background: rgba(233,69,96,0.05); }
+        .admin-table .badge { padding: 3px 8px; border-radius: 10px; font-size: 0.6rem; font-weight: 600; }
+        .badge.verified { background: var(--verified); color: white; }
+        .badge.unverified { background: var(--muted); color: white; }
+        .badge.premium { background: var(--premium); color: #000; }
+        .admin-table button {
+            padding: 4px 6px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--card); color: var(--text); cursor: pointer; font-size: 0.6rem; margin: 1px; transition: all 0.3s;
+        }
+        .admin-table button:hover { border-color: var(--accent); }
+        .admin-table button.edit-btn:hover { background: var(--blue); border-color: var(--blue); }
+        .admin-table button.delete-btn:hover { background: var(--danger); border-color: var(--danger); }
+        .admin-table button.verify-btn:hover { background: var(--verified); border-color: var(--verified); }
+        .admin-table button.premium-btn:hover { background: var(--premium); border-color: var(--premium); color: #000; }
+
+        .stats-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .stat-card { flex: 1; min-width: 100px; background: var(--card); border-radius: 12px; padding: 12px; text-align: center; border: 1px solid var(--border); }
+        .stat-card .stat-number { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+        .stat-card .stat-label { font-size: 0.7rem; color: var(--muted); }
+
+        .privacy-content { line-height: 1.8; font-size: 0.85rem; }
+        .privacy-content h4 { color: var(--accent); margin: 10px 0 5px; }
+
+        .google-btn {
+            width: 100%; padding: 10px; border-radius: 20px; border: 2px solid #4285F4;
+            background: white; color: #333; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;
+        }
+        .google-btn:hover { background: #f1f1f1; box-shadow: 0 4px 15px rgba(66,133,244,0.3); }
+        .google-btn img { width: 20px; height: 20px; }
+
+        #googleAuthSection {
+            transition: all 0.3s; text-align: center; margin-bottom: 15px; padding: 15px;
+            background: rgba(66,133,244,0.1); border-radius: 15px; border: 1px solid #4285F4;
+        }
+        #googleAuthSection.verified { background: rgba(37,211,102,0.1) !important; border-color: #25D366 !important; }
+
+        .divider-text {
+            text-align: center; color: var(--muted); font-size: 0.75rem; margin: 10px 0; position: relative;
+        }
+        .divider-text::before, .divider-text::after {
+            content: ''; position: absolute; top: 50%; width: 30%; height: 1px; background: var(--border);
+        }
+        .divider-text::before { right: 0; }
+        .divider-text::after { left: 0; }
+
+        .disclaimer-box {
+            background: rgba(255,193,7,0.08); border: 1px solid #ffc107;
+            border-radius: 12px; padding: 12px; margin-bottom: 12px;
+        }
+        .disclaimer-box label { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+        .disclaimer-box input[type="checkbox"] {
+            width: 18px; height: 18px; margin-top: 3px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
+        }
+        .disclaimer-box span { font-size: 0.75rem; color: #ffc107; line-height: 1.7; }
+
+        .star-rating { display: flex; gap: 5px; justify-content: center; font-size: 2rem; cursor: pointer; }
+        .star-rating span { color: var(--muted); transition: all 0.2s; }
+        .star-rating span.active { color: var(--gold); }
+
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: var(--panel); color: var(--text); border-radius: 12px; border: 1px solid var(--accent);
+        }
+        .custom-popup .leaflet-popup-tip { background: var(--panel); }
+
+        [dir="rtl"] .left-panel { border-right: none; border-left: 1px solid var(--border); }
+        [dir="rtl"] .right-panel { border-left: none; border-right: 1px solid var(--border); }
+        [dir="rtl"] .service-card { border-right: none; border-left: 3px solid var(--accent); }
+        [dir="rtl"] .service-card.premium { border-left-color: var(--premium); }
+        [dir="rtl"] .service-card:hover { transform: translateX(2px); }
+        [dir="rtl"] .modal .close-btn { right: auto; left: 12px; }
+        [dir="rtl"] .service-card .verified-badge { left: auto; right: 8px; }
+        [dir="rtl"] .service-card .premium-badge { right: auto; left: 8px; }
+
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .left-panel { width: 100%; min-width: 100%; max-height: 35vh; }
+            .map-panel { height: 40vh; }
+            .right-panel { width: 100%; min-width: 100%; max-height: 35vh; }
+            .stats-row { flex-direction: column; }
+            .modal.large { width: 95%; }
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--panel); }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- العمود الأيسر -->
+        <div class="left-panel">
+            <div class="lang-bar" id="langBar">
+                <button class="lang-btn active" data-lang="ar">🇸🇦 عربي</button>
+                <button class="lang-btn" data-lang="en">🇬🇧 EN</button>
+                <button class="lang-btn" data-lang="fr">🇫🇷 FR</button>
+                <button class="lang-btn" data-lang="de">🇩🇪 DE</button>
+                <button class="lang-btn" data-lang="es">🇪🇸 ES</button>
+                <button class="lang-btn" data-lang="tr">🇹🇷 TR</button>
+                <button class="lang-btn" data-lang="ur">🇵🇰 اردو</button>
+            </div>
+
+            <div class="logo" id="logoText">أنا أحتاج إلى<span>...</span></div>
+            <div class="tagline" id="tagline">أي خدمة، في أي مكان</div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="ماذا تحتاج؟">
+                <span class="search-icon">🔍</span>
+            </div>
+
+            <div class="filter-group">
+                <label id="lblCountry">🌍 الدولة</label>
+                <select id="countryFilter"><option value="">كل الدول</option></select>
+            </div>
+
+            <div class="filter-group">
+                <label id="lblCity">🏙️ المدينة</label>
+                <select id="cityFilter"><option value="">كل المدن</option></select>
+            </div>
+
+            <div class="btn-row">
+                <button class="near-me-btn" id="nearMeBtn">📍 قريب مني</button>
+                <button class="search-btn" id="searchBtn">🔍 بحث</button>
+            </div>
+
+            <div class="register-section">
+                <div class="register-title" id="registerTitle">🔽 هل أنت مقدم خدمة؟</div>
+                <button class="register-btn" id="registerBtn">📝 سجل خدمتك هنا</button>
+            </div>
+
+            <div class="bottom-btns">
+                <button class="bottom-btn admin-btn" id="adminBtn">🔐 Admin</button>
+                <button class="bottom-btn" id="contactBtn">📧 تواصل معنا</button>
+                <button class="bottom-btn" id="privacyBtn">📜 سياسة الخصوصية</button>
+            </div>
+
+            <div class="visitor-counter">
+                👀 <span id="visitorLabel">عدد الزوار:</span> 
+                <span class="count" id="visitorCount">0</span>
+            </div>
+        </div>
+
+        <!-- العمود الأوسط: الخريطة -->
+        <div class="map-panel"><div id="map"></div></div>
+
+        <!-- العمود الأيمن: النتائج -->
+        <div class="right-panel">
+            <div class="results-header" id="resultsCount">لا توجد نتائج</div>
+            <div class="results-list" id="resultsList"></div>
+        </div>
+    </div>
+
+    <!-- نافذة التسجيل -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal">
+            <button class="close-btn" id="closeRegisterModal">✕</button>
+            <h3 id="modalTitle">📝 تسجيل مقدم خدمة جديد</h3>
+
+            <div id="googleAuthSection">
+                <p style="font-size:0.8rem; color:#a0a0a0; margin-bottom:10px;" id="googleAuthText">🔐 يجب تسجيل الدخول بحساب Google للتسجيل</p>
+                <button type="button" class="google-btn" id="googleSignInBtnModal">
+                    <img src="https://www.google.com/favicon.ico" alt="G"> تسجيل الدخول بحساب Google
+                </button>
+                <div id="googleUserInfo" style="display:none; margin-top:10px;">
+                    <p style="color:#25D366; font-size:0.8rem;">✅ تم التحقق بنجاح!</p>
+                    <p style="color:white; font-size:0.85rem; font-weight:600;" id="googleUserName"></p>
+                    <p style="color:#a0a0a0; font-size:0.75rem;" id="googleUserEmail"></p>
+                </div>
+            </div>
+
+            <div class="divider-text" id="dividerText">── بيانات الخدمة ──</div>
+
+            <form id="registerForm">
+                <div class="form-group"><label id="lblName">👤 الاسم الكامل</label><input type="text" id="regName" required readonly></div>
+                <div class="form-group"><label id="lblEmail">📧 البريد الإلكتروني</label><input type="email" id="regEmail" required readonly></div>
+                <div class="form-row">
+                    <div class="form-group"><label id="lblProfession1">💼 المهنة الأساسية</label><input type="text" id="regProfession1" required></div>
+                    <div class="form-group"><label id="lblProfession2">💼 مهنة ثانية</label><input type="text" id="regProfession2"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label id="lblPhone1">📞 رقم الهاتف 1</label><input type="tel" id="regPhone1" required></div>
+                    <div class="form-group"><label id="lblPhone2">📞 رقم الهاتف 2</label><input type="tel" id="regPhone2"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label id="lblWhatsApp">💬 الواتساب</label><input type="tel" id="regWhatsApp"></div>
+                    <div class="form-group"><label id="lblCountryReg">🌍 الدولة</label><select id="regCountry" required><option value="">اختر</option></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label id="lblCityReg">🏙️ المدينة</label><input type="text" id="regCity" required></div>
+                    <div class="form-group"><label id="lblPrice">💰 السعر</label><input type="text" id="regPrice"></div>
+                </div>
+                <div class="form-group"><label id="lblWorkHours">🕐 ساعات العمل</label><input type="text" id="regWorkHours"></div>
+                <div class="form-group"><label id="lblDesc">📝 وصف مختصر</label><textarea id="regDesc"></textarea></div>
+
+                <div class="disclaimer-box">
+                    <label>
+                        <input type="checkbox" id="disclaimerCheck" required>
+                        <span id="disclaimerText">⚠️ أقر بأنني المسؤول الوحيد عن دقة المعلومات المقدمة في هذا النموذج، وأتحمل كامل المسؤولية القانونية عنها. منصة "I need..." غير مسؤولة عن أي معلومات خاطئة أو مضللة.</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">✅ تسجيل</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة التقييم -->
+    <div class="modal-overlay" id="rateModal">
+        <div class="modal" style="width:400px;">
+            <button class="close-btn" id="closeRateModal">✕</button>
+            <h3 id="rateModalTitle">⭐ تقييم مزود الخدمة</h3>
+            <input type="hidden" id="rateProviderId">
+            <p style="text-align:center;color:var(--muted);font-size:0.85rem;" id="rateProviderName"></p>
+            <div class="star-rating" id="starRating">
+                <span data-value="1">⭐</span>
+                <span data-value="2">⭐</span>
+                <span data-value="3">⭐</span>
+                <span data-value="4">⭐</span>
+                <span data-value="5">⭐</span>
+            </div>
+            <div class="form-group" style="margin-top:15px;">
+                <label id="rateCommentLabel">📝 تعليقك (اختياري)</label>
+                <textarea id="rateComment" placeholder="اكتب تقييمك..."></textarea>
+            </div>
+            <button class="submit-btn" id="submitRateBtn">✅ إرسال التقييم</button>
+        </div>
+    </div>
+
+    <!-- نافذة الإبلاغ -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal" style="width:400px;">
+            <button class="close-btn" id="closeReportModal">✕</button>
+            <h3 id="reportModalTitle">🚩 إبلاغ عن مزود خدمة</h3>
+            <input type="hidden" id="reportProviderId">
+            <p style="text-align:center;color:var(--muted);font-size:0.85rem;" id="reportProviderName"></p>
+            <div class="form-group">
+                <label id="reportReasonLabel">❓ سبب البلاغ</label>
+                <select id="reportReason">
+                    <option value="احتيال">احتيال</option>
+                    <option value="معلومات خاطئة">معلومات خاطئة</option>
+                    <option value="رقم غير صحيح">رقم غير صحيح</option>
+                    <option value="خدمة غير موجودة">خدمة غير موجودة</option>
+                    <option value="سبب آخر">سبب آخر</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label id="reportDetailsLabel">📝 تفاصيل إضافية</label>
+                <textarea id="reportDetails" placeholder="اشرح المشكلة..."></textarea>
+            </div>
+            <button class="submit-btn danger" id="submitReportBtn">📧 إرسال البلاغ</button>
+        </div>
+    </div>
+
+    <!-- نافذة الأدمن - كلمة المرور -->
+    <div class="modal-overlay" id="adminLoginModal">
+        <div class="modal" style="width:350px;">
+            <button class="close-btn" id="closeAdminLogin">✕</button>
+            <h3 id="adminLoginTitle">🔐 Admin Login</h3>
+            <div class="form-group"><label id="adminPasswordLabel">🔑 كلمة المرور</label><input type="password" id="adminPassword" placeholder="أدخل كلمة المرور"></div>
+            <button class="submit-btn" id="adminLoginBtn">دخول</button>
+            <p style="text-align:center;font-size:0.7rem;color:var(--muted);margin-top:8px;" id="adminDefaultPass">كلمة المرور الافتراضية: admin123</p>
+        </div>
+    </div>
+
+    <!-- نافذة الأدمن - لوحة التحكم -->
+    <div class="modal-overlay" id="adminPanelModal">
+        <div class="modal large">
+            <button class="close-btn" id="closeAdminPanel">✕</button>
+            <h3 id="adminPanelTitle">🛡️ لوحة التحكم - Admin Panel</h3>
+            <div class="stats-row" id="adminStats">
+                <div class="stat-card"><div class="stat-number" id="statProviders">0</div><div class="stat-label" id="statProvidersLabel">مزود خدمة</div></div>
+                <div class="stat-card"><div class="stat-number" id="statVerified">0</div><div class="stat-label" id="statVerifiedLabel">موثقين ✅</div></div>
+                <div class="stat-card"><div class="stat-number" id="statPremium">0</div><div class="stat-label" id="statPremiumLabel">ممولين 💎</div></div>
+                <div class="stat-card"><div class="stat-number" id="statVisitors">0</div><div class="stat-label" id="statVisitorsLabel">زائر</div></div>
+                <div class="stat-card"><div class="stat-number" id="statCountries">0</div><div class="stat-label" id="statCountriesLabel">دولة</div></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                <button class="submit-btn success" id="exportCSVBtn" style="flex:1;">📥 تصدير CSV</button>
+                <button class="submit-btn warning" id="changePasswordBtn" style="flex:1;">🔑 تغيير كلمة المرور</button>
+                <button class="submit-btn danger" id="clearAllBtn" style="flex:1;">🗑️ حذف الكل</button>
+            </div>
+            <div style="max-height:400px;overflow-y:auto;">
+                <table class="admin-table" id="adminTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th id="thName">الاسم</th>
+                            <th id="thProfession">المهنة</th>
+                            <th id="thCity">المدينة</th>
+                            <th id="thViews">مشاهدات</th>
+                            <th id="thClicks">نقرات</th>
+                            <th id="thRating">تقييم</th>
+                            <th id="thVerified">موثق</th>
+                            <th id="thPremium">ممول</th>
+                            <th id="thActions">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل مزود خدمة -->
+    <div class="modal-overlay" id="editProviderModal">
+        <div class="modal">
+            <button class="close-btn" id="closeEditModal">✕</button>
+            <h3 id="editModalTitle">✏️ تعديل بيانات مزود الخدمة</h3>
+            <form id="editProviderForm">
+                <input type="hidden" id="editProviderId">
+                <div class="form-group"><label id="editNameLabel">👤 الاسم</label><input type="text" id="editName" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label id="editProfession1Label">💼 المهنة 1</label><input type="text" id="editProfession1" required></div>
+                    <div class="form-group"><label id="editProfession2Label">💼 المهنة 2</label><input type="text" id="editProfession2"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label id="editPhone1Label">📞 هاتف 1</label><input type="tel" id="editPhone1"></div>
+                    <div class="form-group"><label id="editPhone2Label">📞 هاتف 2</label><input type="tel" id="editPhone2"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label id="editWhatsAppLabel">💬 واتساب</label><input type="tel" id="editWhatsApp"></div>
+                    <div class="form-group"><label id="editEmailLabel">📧 إيميل</label><input type="email" id="editEmail"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label id="editCountryLabel">🌍 الدولة</label><select id="editCountry" required></select></div>
+                    <div class="form-group"><label id="editCityLabel">🏙️ المدينة</label><input type="text" id="editCity" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label id="editPriceLabel">💰 السعر</label><input type="text" id="editPrice"></div>
+                    <div class="form-group"><label id="editWorkHoursLabel">🕐 ساعات العمل</label><input type="text" id="editWorkHours"></div>
+                </div>
+                <div class="form-group"><label id="editDescLabel">📝 الوصف</label><textarea id="editDesc"></textarea></div>
+                <button type="submit" class="submit-btn" id="editSubmitBtn">💾 حفظ التعديلات</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة سياسة الخصوصية -->
+    <div class="modal-overlay" id="privacyModal">
+        <div class="modal">
+            <button class="close-btn" id="closePrivacyModal">✕</button>
+            <h3 id="privacyTitle">📜 سياسة الخصوصية والحماية القانونية</h3>
+            <div class="privacy-content" id="privacyContent">
+                <h4>⚠️ إخلاء المسؤولية</h4>
+                <p>منصة <strong>"I need..."</strong> هي منصة وسيطة تربط بين طالبي الخدمة ومزوديها. المنصة <strong>غير مسؤولة نهائياً</strong> عن:</p>
+                <ul>
+                    <li>أي معلومات خاطئة أو مضللة يقدمها مزودو الخدمة.</li>
+                    <li>جودة الخدمات المقدمة أو نتائجها.</li>
+                    <li>أي نزاعات مالية أو قانونية بين الطرفين.</li>
+                    <li>أي أضرار مباشرة أو غير مباشرة تنتج عن استخدام المنصة.</li>
+                </ul>
+                <h4>👤 مسؤولية المستخدم</h4>
+                <p>يتحمل المستخدم كامل المسؤولية عن:</p>
+                <ul>
+                    <li>التحقق من هوية ومؤهلات مزود الخدمة قبل التعاقد معه.</li>
+                    <li>الاتفاق على الأسعار وشروط الخدمة مباشرة مع مزود الخدمة.</li>
+                    <li>أي مدفوعات تتم خارج المنصة.</li>
+                </ul>
+                <h4>📞 تواصل معنا</h4>
+                <p>لأي استفسارات: <strong>eyadrmh@gmail.com</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // ============================================
+        // 🔥 تهيئة Firebase
+        // ============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDeju88fDieQrSo5OEK9kKAGMACakv3z7I",
+            authDomain: "ineed-f1faf.firebaseapp.com",
+            projectId: "ineed-f1faf",
+            storageBucket: "ineed-f1faf.firebasestorage.app",
+            messagingSenderId: "226685019271",
+            appId: "1:226685019271:web:093602e1dd7bcb77318422",
+            measurementId: "G-8H69SB91FW"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ============================================
+        // 🌍 نظام الترجمة متعدد اللغات (كامل)
+        // ============================================
+        const translations = {
+            ar: {
+                logo: 'أنا أحتاج إلى...', tagline: 'أي خدمة، في أي مكان', searchPlaceholder: 'ماذا تحتاج؟', lblCountry: '🌍 الدولة', lblCity: '🏙️ المدينة',
+                allCountries: 'كل الدول', allCities: 'كل المدن', nearMe: '📍 قريب مني', search: '🔍 بحث', noResults: 'لا توجد نتائج',
+                registerTitle: '🔽 هل أنت مقدم خدمة؟', registerBtn: '📝 سجل خدمتك هنا', visitorLabel: 'عدد الزوار:',
+                modalTitle: '📝 تسجيل مقدم خدمة جديد', lblName: '👤 الاسم الكامل', lblEmail: '📧 البريد الإلكتروني',
+                lblProfession1: '💼 المهنة الأساسية', lblProfession2: '💼 مهنة ثانية', lblPhone1: '📞 رقم الهاتف 1', lblPhone2: '📞 رقم الهاتف 2',
+                lblWhatsApp: '💬 الواتساب', lblCountryReg: '🌍 الدولة', lblCityReg: '🏙️ المدينة', lblPrice: '💰 السعر',
+                lblWorkHours: '🕐 ساعات العمل', lblDesc: '📝 وصف مختصر', submitBtn: '✅ تسجيل',
+                contactWhatsApp: '📱 واتساب', contactEmail: '📧 إيميل', rateBtn: '⭐ تقييم', reportBtn: '🚩 إبلاغ',
+                nearYou: 'قريب منك', km: 'كم', found: 'تم العثور على', service: 'خدمة', services: 'خدمات',
+                successMsg: '✅ تم التسجيل بنجاح!', locateError: '❌ لم نتمكن من تحديد موقعك.', geolocationError: '❌ المتصفح لا يدعم تحديد الموقع.',
+                locating: '⏳ جاري التحديد...', verified: '✅ موثوق', reviews: 'تقييم', youAreHere: '📍 أنت هنا',
+                premiumBadge: '💎 ممول', googleRequired: 'يجب تسجيل الدخول بحساب Google أولاً!',
+                rateSuccess: '✅ شكراً لتقييمك!', reportSuccess: '📧 سيتم فتح تطبيق الإيميل لإرسال البلاغ.',
+                wrongPassword: '❌ كلمة المرور خاطئة!', passwordChanged: '✅ تم تغيير كلمة المرور!',
+                confirmDelete: 'هل أنت متأكد من حذف هذا المزود؟', confirmClearAll: '⚠️ حذف جميع مزودي الخدمة؟',
+                views: 'مشاهدات', clicks: 'نقرات',
+                rateModalTitle: '⭐ تقييم مزود الخدمة', rateCommentLabel: '📝 تعليقك (اختياري)', submitRateBtn: '✅ إرسال التقييم',
+                reportModalTitle: '🚩 إبلاغ عن مزود خدمة', reportReasonLabel: '❓ سبب البلاغ', reportDetailsLabel: '📝 تفاصيل إضافية', submitReportBtn: '📧 إرسال البلاغ',
+                adminPanelTitle: '🛡️ لوحة التحكم - Admin Panel', statProvidersLabel: 'مزود خدمة', statVerifiedLabel: 'موثقين ✅', statPremiumLabel: 'ممولين 💎', statVisitorsLabel: 'زائر', statCountriesLabel: 'دولة',
+                adminLoginTitle: '🔐 دخول الأدمن', adminPasswordLabel: '🔑 كلمة المرور', adminLoginBtn: 'دخول', adminDefaultPass: 'كلمة المرور الافتراضية: admin123',
+                editModalTitle: '✏️ تعديل بيانات مزود الخدمة', editNameLabel: '👤 الاسم', editProfession1Label: '💼 المهنة 1', editProfession2Label: '💼 المهنة 2',
+                editPhone1Label: '📞 هاتف 1', editPhone2Label: '📞 هاتف 2', editWhatsAppLabel: '💬 واتساب', editEmailLabel: '📧 إيميل',
+                editCountryLabel: '🌍 الدولة', editCityLabel: '🏙️ المدينة', editPriceLabel: '💰 السعر', editWorkHoursLabel: '🕐 ساعات العمل', editDescLabel: '📝 الوصف', editSubmitBtn: '💾 حفظ التعديلات',
+                exportCSVBtn: '📥 تصدير CSV', changePasswordBtn: '🔑 تغيير كلمة المرور', clearAllBtn: '🗑️ حذف الكل',
+                thName: 'الاسم', thProfession: 'المهنة', thCity: 'المدينة', thViews: 'مشاهدات', thClicks: 'نقرات', thRating: 'تقييم', thVerified: 'موثق', thPremium: 'ممول', thActions: 'إجراءات',
+                privacyTitle: '📜 سياسة الخصوصية والحماية القانونية', googleAuthText: '🔐 يجب تسجيل الدخول بحساب Google للتسجيل', dividerText: '── بيانات الخدمة ──',
+                disclaimerText: '⚠️ أقر بأنني المسؤول الوحيد عن دقة المعلومات المقدمة في هذا النموذج، وأتحمل كامل المسؤولية القانونية عنها. منصة "I need..." غير مسؤولة عن أي معلومات خاطئة أو مضللة.',
+                dir: 'rtl'
+            },
+            en: {
+                logo: 'I need...', tagline: 'Any Service, Anywhere', searchPlaceholder: 'What do you need?', lblCountry: '🌍 Country', lblCity: '🏙️ City',
+                allCountries: 'All Countries', allCities: 'All Cities', nearMe: '📍 Near Me', search: '🔍 Search', noResults: 'No results',
+                registerTitle: '🔽 Service Provider?', registerBtn: '📝 Register Here', visitorLabel: 'Visitors:',
+                modalTitle: '📝 New Provider', lblName: '👤 Full Name', lblEmail: '📧 Email',
+                lblProfession1: '💼 Primary Profession', lblProfession2: '💼 Secondary Profession', lblPhone1: '📞 Phone 1', lblPhone2: '📞 Phone 2',
+                lblWhatsApp: '💬 WhatsApp', lblCountryReg: '🌍 Country', lblCityReg: '🏙️ City', lblPrice: '💰 Price',
+                lblWorkHours: '🕐 Hours', lblDesc: '📝 Description', submitBtn: '✅ Register',
+                contactWhatsApp: '📱 WhatsApp', contactEmail: '📧 Email', rateBtn: '⭐ Rate', reportBtn: '🚩 Report',
+                nearYou: 'Near you', km: 'km', found: 'Found', service: 'service', services: 'services',
+                successMsg: '✅ Registered!', locateError: '❌ Location error.', geolocationError: '❌ No geolocation.',
+                locating: '⏳ Locating...', verified: '✅ Verified', reviews: 'reviews', youAreHere: '📍 You are here',
+                premiumBadge: '💎 Premium', googleRequired: 'Google Sign-In required first!',
+                rateSuccess: '✅ Thanks for rating!', reportSuccess: '📧 Opening email app...',
+                wrongPassword: '❌ Wrong password!', passwordChanged: '✅ Password changed!',
+                confirmDelete: 'Delete this provider?', confirmClearAll: '⚠️ Delete all providers?',
+                views: 'Views', clicks: 'Clicks',
+                rateModalTitle: '⭐ Rate Provider', rateCommentLabel: '📝 Your Comment (optional)', submitRateBtn: '✅ Submit Rating',
+                reportModalTitle: '🚩 Report Provider', reportReasonLabel: '❓ Reason', reportDetailsLabel: '📝 Details', submitReportBtn: '📧 Send Report',
+                adminPanelTitle: '🛡️ Admin Panel', statProvidersLabel: 'Providers', statVerifiedLabel: 'Verified ✅', statPremiumLabel: 'Premium 💎', statVisitorsLabel: 'Visitors', statCountriesLabel: 'Countries',
+                adminLoginTitle: '🔐 Admin Login', adminPasswordLabel: '🔑 Password', adminLoginBtn: 'Login', adminDefaultPass: 'Default password: admin123',
+                editModalTitle: '✏️ Edit Provider', editNameLabel: '👤 Name', editProfession1Label: '💼 Profession 1', editProfession2Label: '💼 Profession 2',
+                editPhone1Label: '📞 Phone 1', editPhone2Label: '📞 Phone 2', editWhatsAppLabel: '💬 WhatsApp', editEmailLabel: '📧 Email',
+                editCountryLabel: '🌍 Country', editCityLabel: '🏙️ City', editPriceLabel: '💰 Price', editWorkHoursLabel: '🕐 Hours', editDescLabel: '📝 Description', editSubmitBtn: '💾 Save Changes',
+                exportCSVBtn: '📥 Export CSV', changePasswordBtn: '🔑 Change Password', clearAllBtn: '🗑️ Clear All',
+                thName: 'Name', thProfession: 'Profession', thCity: 'City', thViews: 'Views', thClicks: 'Clicks', thRating: 'Rating', thVerified: 'Verified', thPremium: 'Premium', thActions: 'Actions',
+                privacyTitle: '📜 Privacy Policy & Legal Protection', googleAuthText: '🔐 Google Sign-In required to register', dividerText: '── Service Data ──',
+                disclaimerText: '⚠️ I declare that I am solely responsible for the accuracy of the information provided in this form, and I bear full legal responsibility. The "I need..." platform is not responsible for any false or misleading information.',
+                dir: 'ltr'
+            },
+            fr: {
+                logo: "J'ai besoin de...", tagline: 'Tout Service, Partout', searchPlaceholder: 'De quoi avez-vous besoin?', lblCountry: '🌍 Pays', lblCity: '🏙️ Ville',
+                allCountries: 'Tous', allCities: 'Toutes', nearMe: '📍 Près de moi', search: '🔍 Chercher', noResults: 'Aucun résultat',
+                registerTitle: '🔽 Prestataire?', registerBtn: '📝 Enregistrer', visitorLabel: 'Visiteurs:',
+                modalTitle: '📝 Nouveau', lblName: '👤 Nom', lblEmail: '📧 Email',
+                lblProfession1: '💼 Profession 1', lblProfession2: '💼 Profession 2', lblPhone1: '📞 Tél 1', lblPhone2: '📞 Tél 2',
+                lblWhatsApp: '💬 WhatsApp', lblCountryReg: '🌍 Pays', lblCityReg: '🏙️ Ville', lblPrice: '💰 Prix',
+                lblWorkHours: '🕐 Horaires', lblDesc: '📝 Description', submitBtn: '✅ Enregistrer',
+                contactWhatsApp: '📱 WhatsApp', contactEmail: '📧 Email', rateBtn: '⭐ Noter', reportBtn: '🚩 Signaler',
+                nearYou: 'Près de vous', km: 'km', found: 'Trouvé', service: 'service', services: 'services',
+                successMsg: '✅ Enregistré!', locateError: '❌ Erreur.', geolocationError: '❌ Pas de géoloc.',
+                locating: '⏳ Localisation...', verified: '✅ Vérifié', reviews: 'avis', youAreHere: '📍 Vous êtes ici',
+                premiumBadge: '💎 Premium', googleRequired: 'Connexion Google requise!',
+                rateSuccess: '✅ Merci!', reportSuccess: '📧 Ouverture email...',
+                wrongPassword: '❌ Erreur!', passwordChanged: '✅ Mot de passe changé!',
+                confirmDelete: 'Supprimer?', confirmClearAll: '⚠️ Tout effacer?',
+                views: 'Vues', clicks: 'Clics',
+                rateModalTitle: '⭐ Noter le prestataire', rateCommentLabel: '📝 Votre commentaire', submitRateBtn: '✅ Envoyer',
+                reportModalTitle: '🚩 Signaler le prestataire', reportReasonLabel: '❓ Raison', reportDetailsLabel: '📝 Détails', submitReportBtn: '📧 Envoyer',
+                adminPanelTitle: '🛡️ Panneau Admin', statProvidersLabel: 'Prestataires', statVerifiedLabel: 'Vérifiés ✅', statPremiumLabel: 'Premium 💎', statVisitorsLabel: 'Visiteurs', statCountriesLabel: 'Pays',
+                adminLoginTitle: '🔐 Connexion Admin', adminPasswordLabel: '🔑 Mot de passe', adminLoginBtn: 'Entrer', adminDefaultPass: 'Mot de passe: admin123',
+                editModalTitle: '✏️ Modifier le prestataire', editNameLabel: '👤 Nom', editProfession1Label: '💼 Profession 1', editProfession2Label: '💼 Profession 2',
+                editPhone1Label: '📞 Tél 1', editPhone2Label: '📞 Tél 2', editWhatsAppLabel: '💬 WhatsApp', editEmailLabel: '📧 Email',
+                editCountryLabel: '🌍 Pays', editCityLabel: '🏙️ Ville', editPriceLabel: '💰 Prix', editWorkHoursLabel: '🕐 Horaires', editDescLabel: '📝 Description', editSubmitBtn: '💾 Enregistrer',
+                exportCSVBtn: '📥 Export CSV', changePasswordBtn: '🔑 Mot de passe', clearAllBtn: '🗑️ Tout effacer',
+                thName: 'Nom', thProfession: 'Profession', thCity: 'Ville', thViews: 'Vues', thClicks: 'Clics', thRating: 'Note', thVerified: 'Vérifié', thPremium: 'Premium', thActions: 'Actions',
+                privacyTitle: '📜 Politique de confidentialité', googleAuthText: '🔐 Connexion Google requise', dividerText: '── Données du service ──',
+                disclaimerText: '⚠️ Je déclare être seul responsable de l\'exactitude des informations fournies.',
+                dir: 'ltr'
+            },
+            de: {
+                logo: 'Ich brauche...', tagline: 'Jeder Service, Überall', searchPlaceholder: 'Was brauchen Sie?', lblCountry: '🌍 Land', lblCity: '🏙️ Stadt',
+                allCountries: 'Alle', allCities: 'Alle', nearMe: '📍 Nähe', search: '🔍 Suchen', noResults: 'Keine Ergebnisse',
+                registerTitle: '🔽 Anbieter?', registerBtn: '📝 Registrieren', visitorLabel: 'Besucher:',
+                modalTitle: '📝 Neu', lblName: '👤 Name', lblEmail: '📧 Email',
+                lblProfession1: '💼 Beruf 1', lblProfession2: '💼 Beruf 2', lblPhone1: '📞 Tel 1', lblPhone2: '📞 Tel 2',
+                lblWhatsApp: '💬 WhatsApp', lblCountryReg: '🌍 Land', lblCityReg: '🏙️ Stadt', lblPrice: '💰 Preis',
+                lblWorkHours: '🕐 Zeiten', lblDesc: '📝 Beschreibung', submitBtn: '✅ Registrieren',
+                contactWhatsApp: '📱 WhatsApp', contactEmail: '📧 Email', rateBtn: '⭐ Bewerten', reportBtn: '🚩 Melden',
+                nearYou: 'In Ihrer Nähe', km: 'km', found: 'Gefunden', service: 'Dienst', services: 'Dienste',
+                successMsg: '✅ Registriert!', locateError: '❌ Fehler.', geolocationError: '❌ Kein Standort.',
+                locating: '⏳ Ortung...', verified: '✅ Verifiziert', reviews: 'Bewertungen', youAreHere: '📍 Sie sind hier',
+                premiumBadge: '💎 Premium', googleRequired: 'Google-Anmeldung erforderlich!',
+                rateSuccess: '✅ Danke!', reportSuccess: '📧 Öffne E-Mail...',
+                wrongPassword: '❌ Falsch!', passwordChanged: '✅ Passwort geändert!',
+                confirmDelete: 'Löschen?', confirmClearAll: '⚠️ Alles löschen?',
+                views: 'Aufrufe', clicks: 'Klicks',
+                rateModalTitle: '⭐ Anbieter bewerten', rateCommentLabel: '📝 Ihr Kommentar', submitRateBtn: '✅ Senden',
+                reportModalTitle: '🚩 Anbieter melden', reportReasonLabel: '❓ Grund', reportDetailsLabel: '📝 Details', submitReportBtn: '📧 Senden',
+                adminPanelTitle: '🛡️ Admin Panel', statProvidersLabel: 'Anbieter', statVerifiedLabel: 'Verifiziert ✅', statPremiumLabel: 'Premium 💎', statVisitorsLabel: 'Besucher', statCountriesLabel: 'Länder',
+                adminLoginTitle: '🔐 Admin Login', adminPasswordLabel: '🔑 Passwort', adminLoginBtn: 'Login', adminDefaultPass: 'Standard: admin123',
+                editModalTitle: '✏️ Anbieter bearbeiten', editNameLabel: '👤 Name', editProfession1Label: '💼 Beruf 1', editProfession2Label: '💼 Beruf 2',
+                editPhone1Label: '📞 Tel 1', editPhone2Label: '📞 Tel 2', editWhatsAppLabel: '💬 WhatsApp', editEmailLabel: '📧 Email',
+                editCountryLabel: '🌍 Land', editCityLabel: '🏙️ Stadt', editPriceLabel: '💰 Preis', editWorkHoursLabel: '🕐 Zeiten', editDescLabel: '📝 Beschreibung', editSubmitBtn: '💾 Speichern',
+                exportCSVBtn: '📥 CSV Export', changePasswordBtn: '🔑 Passwort', clearAllBtn: '🗑️ Alles löschen',
+                thName: 'Name', thProfession: 'Beruf', thCity: 'Stadt', thViews: 'Aufrufe', thClicks: 'Klicks', thRating: 'Note', thVerified: 'Verifiziert', thPremium: 'Premium', thActions: 'Aktionen',
+                privacyTitle: '📜 Datenschutz', googleAuthText: '🔐 Google-Anmeldung erforderlich', dividerText: '── Dienstdaten ──',
+                disclaimerText: '⚠️ Ich erkläre, dass ich allein für die Richtigkeit der Angaben verantwortlich bin.',
+                dir: 'ltr'
+            },
+            es: {
+                logo: 'Necesito...', tagline: 'Cualquier Servicio', searchPlaceholder: '¿Qué necesitas?', lblCountry: '🌍 País', lblCity: '🏙️ Ciudad',
+                allCountries: 'Todos', allCities: 'Todas', nearMe: '📍 Cerca', search: '🔍 Buscar', noResults: 'Sin resultados',
+                registerTitle: '🔽 ¿Proveedor?', registerBtn: '📝 Registrar', visitorLabel: 'Visitantes:',
+                modalTitle: '📝 Nuevo', lblName: '👤 Nombre', lblEmail: '📧 Email',
+                lblProfession1: '💼 Profesión 1', lblProfession2: '💼 Profesión 2', lblPhone1: '📞 Tel 1', lblPhone2: '📞 Tel 2',
+                lblWhatsApp: '💬 WhatsApp', lblCountryReg: '🌍 País', lblCityReg: '🏙️ Ciudad', lblPrice: '💰 Precio',
+                lblWorkHours: '🕐 Horario', lblDesc: '📝 Descripción', submitBtn: '✅ Registrar',
+                contactWhatsApp: '📱 WhatsApp', contactEmail: '📧 Email', rateBtn: '⭐ Calificar', reportBtn: '🚩 Reportar',
+                nearYou: 'Cerca', km: 'km', found: 'Encontrado', service: 'servicio', services: 'servicios',
+                successMsg: '✅ ¡Registrado!', locateError: '❌ Error.', geolocationError: '❌ Sin geoloc.',
+                locating: '⏳ Localizando...', verified: '✅ Verificado', reviews: 'reseñas', youAreHere: '📍 Estás aquí',
+                premiumBadge: '💎 Premium', googleRequired: '¡Google requerido!',
+                rateSuccess: '✅ ¡Gracias!', reportSuccess: '📧 Abriendo email...',
+                wrongPassword: '❌ ¡Error!', passwordChanged: '✅ ¡Contraseña cambiada!',
+                confirmDelete: '¿Borrar?', confirmClearAll: '⚠️ ¿Borrar todo?',
+                views: 'Vistas', clicks: 'Clics',
+                rateModalTitle: '⭐ Calificar proveedor', rateCommentLabel: '📝 Tu comentario', submitRateBtn: '✅ Enviar',
+                reportModalTitle: '🚩 Reportar proveedor', reportReasonLabel: '❓ Razón', reportDetailsLabel: '📝 Detalles', submitReportBtn: '📧 Enviar',
+                adminPanelTitle: '🛡️ Panel Admin', statProvidersLabel: 'Proveedores', statVerifiedLabel: 'Verificados ✅', statPremiumLabel: 'Premium 💎', statVisitorsLabel: 'Visitantes', statCountriesLabel: 'Países',
+                adminLoginTitle: '🔐 Admin Login', adminPasswordLabel: '🔑 Contraseña', adminLoginBtn: 'Entrar', adminDefaultPass: 'Contraseña: admin123',
+                editModalTitle: '✏️ Editar proveedor', editNameLabel: '👤 Nombre', editProfession1Label: '💼 Profesión 1', editProfession2Label: '💼 Profesión 2',
+                editPhone1Label: '📞 Tel 1', editPhone2Label: '📞 Tel 2', editWhatsAppLabel: '💬 WhatsApp', editEmailLabel: '📧 Email',
+                editCountryLabel: '🌍 País', editCityLabel: '🏙️ Ciudad', editPriceLabel: '💰 Precio', editWorkHoursLabel: '🕐 Horario', editDescLabel: '📝 Descripción', editSubmitBtn: '💾 Guardar',
+                exportCSVBtn: '📥 Export CSV', changePasswordBtn: '🔑 Contraseña', clearAllBtn: '🗑️ Borrar todo',
+                thName: 'Nombre', thProfession: 'Profesión', thCity: 'Ciudad', thViews: 'Vistas', thClicks: 'Clics', thRating: 'Nota', thVerified: 'Verificado', thPremium: 'Premium', thActions: 'Acciones',
+                privacyTitle: '📜 Privacidad', googleAuthText: '🔐 Google requerido', dividerText: '── Datos del servicio ──',
+                disclaimerText: '⚠️ Declaro que soy el único responsable de la exactitud de la información.',
+                dir: 'ltr'
+            },
+            tr: {
+                logo: 'İhtiyacım var...', tagline: 'Her Hizmet, Her Yerde', searchPlaceholder: 'Ne arıyorsunuz?', lblCountry: '🌍 Ülke', lblCity: '🏙️ Şehir',
+                allCountries: 'Tümü', allCities: 'Tümü', nearMe: '📍 Yakınımda', search: '🔍 Ara', noResults: 'Sonuç yok',
+                registerTitle: '🔽 Sağlayıcı?', registerBtn: '📝 Kaydet', visitorLabel: 'Ziyaretçi:',
+                modalTitle: '📝 Yeni', lblName: '👤 Ad', lblEmail: '📧 E-posta',
+                lblProfession1: '💼 Meslek 1', lblProfession2: '💼 Meslek 2', lblPhone1: '📞 Tel 1', lblPhone2: '📞 Tel 2',
+                lblWhatsApp: '💬 WhatsApp', lblCountryReg: '🌍 Ülke', lblCityReg: '🏙️ Şehir', lblPrice: '💰 Fiyat',
+                lblWorkHours: '🕐 Saatler', lblDesc: '📝 Açıklama', submitBtn: '✅ Kaydet',
+                contactWhatsApp: '📱 WhatsApp', contactEmail: '📧 E-posta', rateBtn: '⭐ Oyla', reportBtn: '🚩 Bildir',
+                nearYou: 'Yakında', km: 'km', found: 'Bulundu', service: 'hizmet', services: 'hizmetler',
+                successMsg: '✅ Kaydedildi!', locateError: '❌ Hata.', geolocationError: '❌ Konum yok.',
+                locating: '⏳ Konum...', verified: '✅ Doğrulandı', reviews: 'yorum', youAreHere: '📍 Buradasınız',
+                premiumBadge: '💎 Premium', googleRequired: 'Google girişi gerekli!',
+                rateSuccess: '✅ Teşekkürler!', reportSuccess: '📧 E-posta açılıyor...',
+                wrongPassword: '❌ Yanlış!', passwordChanged: '✅ Şifre değişti!',
+                confirmDelete: 'Silinsin mi?', confirmClearAll: '⚠️ Hepsi silinsin mi?',
+                views: 'Görüntülenme', clicks: 'Tıklama',
+                rateModalTitle: '⭐ Sağlayıcıyı Oyla', rateCommentLabel: '📝 Yorumunuz', submitRateBtn: '✅ Gönder',
+                reportModalTitle: '🚩 Sağlayıcıyı Bildir', reportReasonLabel: '❓ Neden', reportDetailsLabel: '📝 Detaylar', submitReportBtn: '📧 Gönder',
+                adminPanelTitle: '🛡️ Admin Paneli', statProvidersLabel: 'Sağlayıcılar', statVerifiedLabel: 'Doğrulanmış ✅', statPremiumLabel: 'Premium 💎', statVisitorsLabel: 'Ziyaretçiler', statCountriesLabel: 'Ülkeler',
+                adminLoginTitle: '🔐 Admin Girişi', adminPasswordLabel: '🔑 Şifre', adminLoginBtn: 'Giriş', adminDefaultPass: 'Şifre: admin123',
+                editModalTitle: '✏️ Sağlayıcıyı Düzenle', editNameLabel: '👤 Ad', editProfession1Label: '💼 Meslek 1', editProfession2Label: '💼 Meslek 2',
+                editPhone1Label: '📞 Tel 1', editPhone2Label: '📞 Tel 2', editWhatsAppLabel: '💬 WhatsApp', editEmailLabel: '📧 E-posta',
+                editCountryLabel: '🌍 Ülke', editCityLabel: '🏙️ Şehir', editPriceLabel: '💰 Fiyat', editWorkHoursLabel: '🕐 Saatler', editDescLabel: '📝 Açıklama', editSubmitBtn: '💾 Kaydet',
+                exportCSVBtn: '📥 CSV Dışa Aktar', changePasswordBtn: '🔑 Şifre Değiştir', clearAllBtn: '🗑️ Hepsini Sil',
+                thName: 'Ad', thProfession: 'Meslek', thCity: 'Şehir', thViews: 'Görüntülenme', thClicks: 'Tıklama', thRating: 'Not', thVerified: 'Doğrulandı', thPremium: 'Premium', thActions: 'İşlemler',
+                privacyTitle: '📜 Gizlilik', googleAuthText: '🔐 Google girişi gerekli', dividerText: '── Hizmet Verileri ──',
+                disclaimerText: '⚠️ Bilgilerin doğruluğundan tek başıma sorumlu olduğumu beyan ederim.',
+                dir: 'ltr'
+            },
+            ur: {
+                logo: 'مجھے ضرورت ہے...', tagline: 'کوئی بھی خدمت', searchPlaceholder: 'کیا چاہیے؟', lblCountry: '🌍 ملک', lblCity: '🏙️ شہر',
+                allCountries: 'تمام', allCities: 'تمام', nearMe: '📍 قریب', search: '🔍 تلاش', noResults: 'کوئی نہیں',
+                registerTitle: '🔽 پرووائیڈر؟', registerBtn: '📝 رجسٹر', visitorLabel: 'وزیٹر:',
+                modalTitle: '📝 نیا', lblName: '👤 نام', lblEmail: '📧 ای میل',
+                lblProfession1: '💼 پیشہ 1', lblProfession2: '💼 پیشہ 2', lblPhone1: '📞 فون 1', lblPhone2: '📞 فون 2',
+                lblWhatsApp: '💬 واٹس', lblCountryReg: '🌍 ملک', lblCityReg: '🏙️ شہر', lblPrice: '💰 قیمت',
+                lblWorkHours: '🕐 اوقات', lblDesc: '📝 تفصیل', submitBtn: '✅ رجسٹر',
+                contactWhatsApp: '📱 واٹس', contactEmail: '📧 ای میل', rateBtn: '⭐ ریٹ', reportBtn: '🚩 رپورٹ',
+                nearYou: 'قریب', km: 'کلومیٹر', found: 'ملے', service: 'خدمت', services: 'خدمات',
+                successMsg: '✅ رجسٹرڈ!', locateError: '❌ خرابی.', geolocationError: '❌ لوکیشن نہیں.',
+                locating: '⏳ تلاش...', verified: '✅ تصدیق', reviews: 'تبصرے', youAreHere: '📍 یہاں',
+                premiumBadge: '💎 پریمیم', googleRequired: 'گوگل سائن ان ضروری!',
+                rateSuccess: '✅ شکریہ!', reportSuccess: '📧 ای میل کھل رہی ہے...',
+                wrongPassword: '❌ غلط!', passwordChanged: '✅ پاسورڈ بدل گیا!',
+                confirmDelete: 'حذف کریں؟', confirmClearAll: '⚠️ سب حذف؟',
+                views: 'مشاہدات', clicks: 'کلکس',
+                rateModalTitle: '⭐ پرووائیڈر کو ریٹ کریں', rateCommentLabel: '📝 آپ کا تبصرہ', submitRateBtn: '✅ بھیجیں',
+                reportModalTitle: '🚩 پرووائیڈر کی رپورٹ', reportReasonLabel: '❓ وجہ', reportDetailsLabel: '📝 تفصیلات', submitReportBtn: '📧 بھیجیں',
+                adminPanelTitle: '🛡️ ایڈمن پینل', statProvidersLabel: 'پرووائیڈرز', statVerifiedLabel: 'تصدیق شدہ ✅', statPremiumLabel: 'پریمیم 💎', statVisitorsLabel: 'وزیٹرز', statCountriesLabel: 'ممالک',
+                adminLoginTitle: '🔐 ایڈمن لاگ ان', adminPasswordLabel: '🔑 پاسورڈ', adminLoginBtn: 'داخل', adminDefaultPass: 'پاسورڈ: admin123',
+                editModalTitle: '✏️ پرووائیڈر ترمیم', editNameLabel: '👤 نام', editProfession1Label: '💼 پیشہ 1', editProfession2Label: '💼 پیشہ 2',
+                editPhone1Label: '📞 فون 1', editPhone2Label: '📞 فون 2', editWhatsAppLabel: '💬 واٹس', editEmailLabel: '📧 ای میل',
+                editCountryLabel: '🌍 ملک', editCityLabel: '🏙️ شہر', editPriceLabel: '💰 قیمت', editWorkHoursLabel: '🕐 اوقات', editDescLabel: '📝 تفصیل', editSubmitBtn: '💾 محفوظ',
+                exportCSVBtn: '📥 CSV ڈاؤنلوڈ', changePasswordBtn: '🔑 پاسورڈ', clearAllBtn: '🗑️ سب حذف',
+                thName: 'نام', thProfession: 'پیشہ', thCity: 'شہر', thViews: 'مشاہدات', thClicks: 'کلکس', thRating: 'ریٹنگ', thVerified: 'تصدیق', thPremium: 'پریمیم', thActions: 'اقدامات',
+                privacyTitle: '📜 پرائیویسی', googleAuthText: '🔐 گوگل سائن ان ضروری', dividerText: '── سروس ڈیٹا ──',
+                disclaimerText: '⚠️ میں معلومات کی درستگی کا واحد ذمہ دار ہوں۔',
+                dir: 'rtl'
+            }
+        };
+
+        let currentLang = 'ar';
+        let serviceProviders = [];
+        let adminPassword = 'admin123';
+
+        // ============================================
+        // 🌍 بيانات الدول (ضع هنا بياناتك الكاملة)
+        // ============================================
+        const countriesData = [
+    // ============ الدول العربية ============
+    { code: 'SA', name: 'Saudi Arabia', nameAr: 'السعودية', lat: 23.885, lng: 45.079, cities: ['Riyadh', 'Jeddah', 'Makkah', 'Medina', 'Dammam', 'Taif', 'Tabuk', 'Abha', 'Khobar', 'Buraidah'] },
+    { code: 'AE', name: 'United Arab Emirates', nameAr: 'الإمارات', lat: 23.424, lng: 53.847, cities: ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Al Ain', 'Umm Al Quwain', 'Khor Fakkan', 'Dibba'] },
+    { code: 'QA', name: 'Qatar', nameAr: 'قطر', lat: 25.354, lng: 51.183, cities: ['Doha', 'Al Wakrah', 'Al Khor', 'Lusail', 'Mesaieed', 'Dukhan', 'Al Ruwais', 'Al Shamal', 'Umm Salal', 'Al Ghuwariyah'] },
+    { code: 'KW', name: 'Kuwait', nameAr: 'الكويت', lat: 29.311, lng: 47.481, cities: ['Kuwait City', 'Hawalli', 'Salmiya', 'Fahaheel', 'Jahra', 'Ahmadi', 'Farwaniya', 'Sabah Al Salem', 'Mubarak Al Kabeer', 'Abdullah Al Mubarak'] },
+    { code: 'OM', name: 'Oman', nameAr: 'عُمان', lat: 21.512, lng: 55.923, cities: ['Muscat', 'Salalah', 'Sohar', 'Nizwa', 'Sur', 'Ibri', 'Barka', 'Rustaq', 'Buraimi', 'Khasab'] },
+    { code: 'BH', name: 'Bahrain', nameAr: 'البحرين', lat: 25.93, lng: 50.637, cities: ['Manama', 'Riffa', 'Muharraq', 'Hamad Town', 'Isa Town', 'Sitra', 'Budaiya', 'Jidhafs', 'Aali', 'Zallaq'] },
+    { code: 'JO', name: 'Jordan', nameAr: 'الأردن', lat: 30.585, lng: 36.238, cities: ['Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Salt', 'Madaba', 'Karak', 'Mafraq', 'Tafilah', 'Jerash'] },
+    { code: 'EG', name: 'Egypt', nameAr: 'مصر', lat: 26.82, lng: 30.802, cities: ['Cairo', 'Alexandria', 'Giza', 'Sharm El Sheikh', 'Hurghada', 'Luxor', 'Aswan', 'Port Said', 'Suez', 'Mansoura'] },
+    { code: 'LB', name: 'Lebanon', nameAr: 'لبنان', lat: 33.854, lng: 35.862, cities: ['Beirut', 'Tripoli', 'Sidon', 'Byblos', 'Zahle', 'Tyre', 'Baalbek', 'Jounieh', 'Nabatieh', 'Aley'] },
+    { code: 'SY', name: 'Syria', nameAr: 'سوريا', lat: 34.802, lng: 38.996, cities: ['Damascus', 'Aleppo', 'Homs', 'Latakia', 'Hama', 'Deir ez-Zor', 'Raqqa', 'Tartus', 'Daraa', 'Idlib'] },
+    { code: 'IQ', name: 'Iraq', nameAr: 'العراق', lat: 33.223, lng: 43.679, cities: ['Baghdad', 'Basra', 'Erbil', 'Mosul', 'Najaf', 'Karbala', 'Sulaymaniyah', 'Kirkuk', 'Duhok', 'Fallujah'] },
+    { code: 'YE', name: 'Yemen', nameAr: 'اليمن', lat: 15.552, lng: 48.516, cities: ['Sanaa', 'Aden', 'Taiz', 'Hodeidah', 'Mukalla', 'Ibb', 'Dhamar', 'Zinjibar', 'Socotra', 'Marib'] },
+    { code: 'PS', name: 'Palestine', nameAr: 'فلسطين', lat: 31.952, lng: 35.233, cities: ['Jerusalem', 'Ramallah', 'Gaza', 'Nablus', 'Hebron', 'Bethlehem', 'Jenin', 'Tulkarm', 'Qalqilya', 'Jericho'] },
+    { code: 'SD', name: 'Sudan', nameAr: 'السودان', lat: 12.862, lng: 30.217, cities: ['Khartoum', 'Omdurman', 'Port Sudan', 'Kassala', 'Nyala', 'El Obeid', 'Wad Madani', 'Atbara', 'Kosti', 'El Fasher'] },
+    { code: 'LY', name: 'Libya', nameAr: 'ليبيا', lat: 26.335, lng: 17.228, cities: ['Tripoli', 'Benghazi', 'Misrata', 'Zawiya', 'Sabha', 'Sirte', 'Tobruk', 'Derna', 'Ghadames', 'Al Bayda'] },
+    { code: 'TN', name: 'Tunisia', nameAr: 'تونس', lat: 33.886, lng: 9.537, cities: ['Tunis', 'Sfax', 'Sousse', 'Kairouan', 'Bizerte', 'Gabès', 'Ariana', 'Nabeul', 'Monastir', 'Djerba'] },
+    { code: 'DZ', name: 'Algeria', nameAr: 'الجزائر', lat: 28.033, lng: 1.659, cities: ['Algiers', 'Oran', 'Constantine', 'Annaba', 'Blida', 'Batna', 'Sétif', 'Tlemcen', 'Ghardaïa', 'Béjaïa'] },
+    { code: 'MA', name: 'Morocco', nameAr: 'المغرب', lat: 31.791, lng: -7.092, cities: ['Casablanca', 'Rabat', 'Marrakech', 'Fes', 'Tangier', 'Agadir', 'Meknes', 'Oujda', 'Kenitra', 'Tetouan'] },
+    { code: 'MR', name: 'Mauritania', nameAr: 'موريتانيا', lat: 21.007, lng: -10.94, cities: ['Nouakchott', 'Nouadhibou', 'Rosso', 'Atar', 'Kiffa', 'Kaédi', 'Zouérat', 'Néma', 'Sélibaby', 'Aleg'] },
+    { code: 'SO', name: 'Somalia', nameAr: 'الصومال', lat: 5.152, lng: 46.199, cities: ['Mogadishu', 'Hargeisa', 'Bosaso', 'Kismayo', 'Berbera', 'Baidoa', 'Merca', 'Borama', 'Galkayo', 'Garowe'] },
+    { code: 'DJ', name: 'Djibouti', nameAr: 'جيبوتي', lat: 11.825, lng: 42.59, cities: ['Djibouti City', 'Ali Sabieh', 'Tadjoura', 'Dikhil', 'Obock', 'Arta', 'Yoboki', 'Randa', 'Dorale', 'Balho'] },
+    { code: 'KM', name: 'Comoros', nameAr: 'جزر القمر', lat: -11.645, lng: 43.333, cities: ['Moroni', 'Mutsamudu', 'Fomboni', 'Domoni', 'Tsingoni', 'Ouani', 'Sima', 'Mbeni', 'Mitsamiouli', 'Moya'] },
+
+    // ============ آسيا ============
+    { code: 'TR', name: 'Turkey', nameAr: 'تركيا', lat: 38.963, lng: 35.243, cities: ['Istanbul', 'Ankara', 'Izmir', 'Antalya', 'Bursa', 'Adana', 'Gaziantep', 'Konya', 'Mersin', 'Diyarbakir'] },
+    { code: 'IR', name: 'Iran', nameAr: 'إيران', lat: 32.427, lng: 53.688, cities: ['Tehran', 'Mashhad', 'Isfahan', 'Shiraz', 'Tabriz', 'Qom', 'Ahvaz', 'Kermanshah', 'Rasht', 'Yazd'] },
+    { code: 'PK', name: 'Pakistan', nameAr: 'باكستان', lat: 30.375, lng: 69.345, cities: ['Karachi', 'Lahore', 'Islamabad', 'Peshawar', 'Quetta', 'Faisalabad', 'Multan', 'Hyderabad', 'Rawalpindi', 'Gujranwala'] },
+    { code: 'IN', name: 'India', nameAr: 'الهند', lat: 20.593, lng: 78.962, cities: ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat'] },
+    { code: 'BD', name: 'Bangladesh', nameAr: 'بنغلاديش', lat: 23.685, lng: 90.356, cities: ['Dhaka', 'Chittagong', 'Khulna', 'Rajshahi', 'Sylhet', 'Barisal', 'Rangpur', 'Comilla', 'Narayanganj', 'Mymensingh'] },
+    { code: 'LK', name: 'Sri Lanka', nameAr: 'سريلانكا', lat: 7.873, lng: 80.771, cities: ['Colombo', 'Kandy', 'Galle', 'Jaffna', 'Negombo', 'Batticaloa', 'Trincomalee', 'Anuradhapura', 'Nuwara Eliya', 'Matara'] },
+    { code: 'NP', name: 'Nepal', nameAr: 'نيبال', lat: 28.394, lng: 84.124, cities: ['Kathmandu', 'Pokhara', 'Lalitpur', 'Biratnagar', 'Birgunj', 'Dharan', 'Butwal', 'Bharatpur', 'Janakpur', 'Hetauda'] },
+    { code: 'BT', name: 'Bhutan', nameAr: 'بوتان', lat: 27.514, lng: 90.433, cities: ['Thimphu', 'Phuntsholing', 'Paro', 'Punakha', 'Gelephu', 'Samdrup Jongkhar', 'Wangdue Phodrang', 'Trashigang', 'Mongar', 'Bumthang'] },
+    { code: 'MV', name: 'Maldives', nameAr: 'المالديف', lat: 3.202, lng: 73.22, cities: ['Malé', 'Addu City', 'Fuvahmulah', 'Kulhudhuffushi', 'Thinadhoo', 'Hithadhoo', 'Villingili', 'Naifaru', 'Dhidhdhoo', 'Mahibadhoo'] },
+    { code: 'AF', name: 'Afghanistan', nameAr: 'أفغانستان', lat: 33.939, lng: 67.71, cities: ['Kabul', 'Kandahar', 'Herat', 'Mazar-i-Sharif', 'Jalalabad', 'Kunduz', 'Ghazni', 'Balkh', 'Lashkar Gah', 'Taloqan'] },
+    { code: 'KZ', name: 'Kazakhstan', nameAr: 'كازاخستان', lat: 48.019, lng: 66.923, cities: ['Almaty', 'Astana', 'Shymkent', 'Karaganda', 'Aktobe', 'Taraz', 'Pavlodar', 'Oskemen', 'Semey', 'Uralsk'] },
+    { code: 'UZ', name: 'Uzbekistan', nameAr: 'أوزبكستان', lat: 41.377, lng: 64.585, cities: ['Tashkent', 'Samarkand', 'Bukhara', 'Andijan', 'Namangan', 'Fergana', 'Qarshi', 'Nukus', 'Khiva', 'Kokand'] },
+    { code: 'KG', name: 'Kyrgyzstan', nameAr: 'قيرغيزستان', lat: 41.204, lng: 74.766, cities: ['Bishkek', 'Osh', 'Jalal-Abad', 'Karakol', 'Tokmok', 'Naryn', 'Balykchy', 'Talas', 'Batken', 'Cholpon-Ata'] },
+    { code: 'TJ', name: 'Tajikistan', nameAr: 'طاجيكستان', lat: 38.861, lng: 71.276, cities: ['Dushanbe', 'Khujand', 'Kulob', 'Bokhtar', 'Istaravshan', 'Panjakent', 'Tursunzoda', 'Konibodom', 'Isfara', 'Vahdat'] },
+    { code: 'TM', name: 'Turkmenistan', nameAr: 'تركمانستان', lat: 38.969, lng: 59.556, cities: ['Ashgabat', 'Turkmenabat', 'Dashoguz', 'Mary', 'Balkanabat', 'Bayramaly', 'Serdar', 'Tedjen', 'Koneurgench', 'Yoloten'] },
+    { code: 'AZ', name: 'Azerbaijan', nameAr: 'أذربيجان', lat: 40.143, lng: 47.576, cities: ['Baku', 'Ganja', 'Sumqayit', 'Mingachevir', 'Lankaran', 'Shaki', 'Nakhchivan', 'Shamakhi', 'Gabala', 'Quba'] },
+    { code: 'GE', name: 'Georgia', nameAr: 'جورجيا', lat: 42.315, lng: 43.356, cities: ['Tbilisi', 'Batumi', 'Kutaisi', 'Rustavi', 'Zugdidi', 'Gori', 'Poti', 'Telavi', 'Mtskheta', 'Akhaltsikhe'] },
+    { code: 'AM', name: 'Armenia', nameAr: 'أرمينيا', lat: 40.069, lng: 45.038, cities: ['Yerevan', 'Gyumri', 'Vanadzor', 'Vagharshapat', 'Hrazdan', 'Abovyan', 'Kapan', 'Armavir', 'Gavar', 'Artashat'] },
+    { code: 'CN', name: 'China', nameAr: 'الصين', lat: 35.861, lng: 104.195, cities: ['Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 'Chengdu', 'Hangzhou', 'Wuhan', 'Xi\'an', 'Chongqing', 'Nanjing'] },
+    { code: 'JP', name: 'Japan', nameAr: 'اليابان', lat: 36.204, lng: 138.252, cities: ['Tokyo', 'Osaka', 'Kyoto', 'Yokohama', 'Nagoya', 'Sapporo', 'Fukuoka', 'Kobe', 'Hiroshima', 'Sendai'] },
+    { code: 'KR', name: 'South Korea', nameAr: 'كوريا الجنوبية', lat: 35.907, lng: 127.766, cities: ['Seoul', 'Busan', 'Incheon', 'Daegu', 'Daejeon', 'Gwangju', 'Suwon', 'Ulsan', 'Jeju', 'Changwon'] },
+    { code: 'KP', name: 'North Korea', nameAr: 'كوريا الشمالية', lat: 40.339, lng: 127.51, cities: ['Pyongyang', 'Hamhung', 'Chongjin', 'Nampo', 'Wonsan', 'Sinuiju', 'Kaesong', 'Haeju', 'Kanggye', 'Sariwon'] },
+    { code: 'MN', name: 'Mongolia', nameAr: 'منغوليا', lat: 46.862, lng: 103.846, cities: ['Ulaanbaatar', 'Erdenet', 'Darkhan', 'Choibalsan', 'Mörön', 'Khovd', 'Ölgii', 'Bayankhongor', 'Ulaangom', 'Arvaikheer'] },
+    { code: 'TW', name: 'Taiwan', nameAr: 'تايوان', lat: 23.697, lng: 120.96, cities: ['Taipei', 'Kaohsiung', 'Taichung', 'Tainan', 'Hsinchu', 'Keelung', 'Chiayi', 'Changhua', 'Pingtung', 'Taitung'] },
+    { code: 'HK', name: 'Hong Kong', nameAr: 'هونغ كونغ', lat: 22.319, lng: 114.169, cities: ['Hong Kong Island', 'Kowloon', 'New Territories', 'Tsuen Wan', 'Tuen Mun', 'Sha Tin', 'Tai Po', 'Yuen Long', 'Aberdeen', 'Stanley'] },
+    { code: 'MO', name: 'Macau', nameAr: 'ماكاو', lat: 22.198, lng: 113.543, cities: ['Macau Peninsula', 'Taipa', 'Coloane', 'Cotai', 'Hac Sa', 'Seac Pai Van', 'Ka Ho', 'Pac On', 'Fai Chi Kei', 'Ilha Verde'] },
+    { code: 'LA', name: 'Laos', nameAr: 'لاوس', lat: 19.856, lng: 102.495, cities: ['Vientiane', 'Luang Prabang', 'Savannakhet', 'Pakse', 'Thakhek', 'Xam Neua', 'Phonsavan', 'Muang Xay', 'Huay Xai', 'Luang Namtha'] },
+    { code: 'TH', name: 'Thailand', nameAr: 'تايلاند', lat: 15.87, lng: 100.992, cities: ['Bangkok', 'Chiang Mai', 'Phuket', 'Pattaya', 'Krabi', 'Hat Yai', 'Udon Thani', 'Khon Kaen', 'Nakhon Ratchasima', 'Hua Hin'] },
+    { code: 'VN', name: 'Vietnam', nameAr: 'فيتنام', lat: 14.058, lng: 108.277, cities: ['Hanoi', 'Ho Chi Minh City', 'Da Nang', 'Hai Phong', 'Can Tho', 'Nha Trang', 'Hue', 'Da Lat', 'Vung Tau', 'Quy Nhon'] },
+    { code: 'KH', name: 'Cambodia', nameAr: 'كمبوديا', lat: 12.565, lng: 104.991, cities: ['Phnom Penh', 'Siem Reap', 'Battambang', 'Sihanoukville', 'Kampong Cham', 'Kampot', 'Kep', 'Pursat', 'Kratie', 'Poipet'] },
+    { code: 'MM', name: 'Myanmar', nameAr: 'ميانمار', lat: 21.916, lng: 95.956, cities: ['Yangon', 'Mandalay', 'Naypyidaw', 'Bago', 'Mawlamyine', 'Taunggyi', 'Monywa', 'Meiktila', 'Pathein', 'Sittwe'] },
+    { code: 'MY', name: 'Malaysia', nameAr: 'ماليزيا', lat: 4.21, lng: 101.975, cities: ['Kuala Lumpur', 'Penang', 'Johor Bahru', 'Malacca', 'Ipoh', 'Kota Kinabalu', 'Kuching', 'Shah Alam', 'Petaling Jaya', 'Putrajaya'] },
+    { code: 'SG', name: 'Singapore', nameAr: 'سنغافورة', lat: 1.352, lng: 103.819, cities: ['Singapore City', 'Jurong', 'Woodlands', 'Tampines', 'Yishun', 'Ang Mo Kio', 'Bedok', 'Clementi', 'Punggol', 'Sengkang'] },
+    { code: 'BN', name: 'Brunei', nameAr: 'بروناي', lat: 4.535, lng: 114.727, cities: ['Bandar Seri Begawan', 'Kuala Belait', 'Seria', 'Tutong', 'Bangar', 'Muara', 'Jerudong', 'Gadong', 'Kampong Ayer', 'Kuala Lurah'] },
+    { code: 'ID', name: 'Indonesia', nameAr: 'إندونيسيا', lat: -0.789, lng: 113.921, cities: ['Jakarta', 'Surabaya', 'Bandung', 'Medan', 'Bali', 'Yogyakarta', 'Semarang', 'Makassar', 'Palembang', 'Batam'] },
+    { code: 'TL', name: 'Timor-Leste', nameAr: 'تيمور الشرقية', lat: -8.874, lng: 125.727, cities: ['Dili', 'Baucau', 'Maliana', 'Suai', 'Lospalos', 'Same', 'Aileu', 'Ermera', 'Liquiçá', 'Manatuto'] },
+    { code: 'PH', name: 'Philippines', nameAr: 'الفلبين', lat: 12.879, lng: 121.774, cities: ['Manila', 'Quezon City', 'Cebu', 'Davao', 'Baguio', 'Iloilo', 'Zamboanga', 'Cagayan de Oro', 'Bacolod', 'Angeles'] },
+
+    // ============ أوروبا ============
+    { code: 'GB', name: 'United Kingdom', nameAr: 'بريطانيا', lat: 55.378, lng: -3.436, cities: ['London', 'Manchester', 'Birmingham', 'Liverpool', 'Edinburgh', 'Glasgow', 'Leeds', 'Sheffield', 'Bristol', 'Cardiff'] },
+    { code: 'FR', name: 'France', nameAr: 'فرنسا', lat: 46.603, lng: 1.888, cities: ['Paris', 'Lyon', 'Marseille', 'Nice', 'Toulouse', 'Bordeaux', 'Lille', 'Nantes', 'Strasbourg', 'Montpellier'] },
+    { code: 'DE', name: 'Germany', nameAr: 'ألمانيا', lat: 51.165, lng: 10.451, cities: ['Berlin', 'Munich', 'Frankfurt', 'Hamburg', 'Cologne', 'Stuttgart', 'Düsseldorf', 'Dresden', 'Leipzig', 'Bremen'] },
+    { code: 'IT', name: 'Italy', nameAr: 'إيطاليا', lat: 41.871, lng: 12.567, cities: ['Rome', 'Milan', 'Naples', 'Florence', 'Venice', 'Turin', 'Bologna', 'Genoa', 'Palermo', 'Verona'] },
+    { code: 'ES', name: 'Spain', nameAr: 'إسبانيا', lat: 40.463, lng: -3.749, cities: ['Madrid', 'Barcelona', 'Valencia', 'Seville', 'Malaga', 'Bilbao', 'Zaragoza', 'Granada', 'Alicante', 'Murcia'] },
+    { code: 'PT', name: 'Portugal', nameAr: 'البرتغال', lat: 39.399, lng: -8.224, cities: ['Lisbon', 'Porto', 'Faro', 'Coimbra', 'Braga', 'Aveiro', 'Evora', 'Lagos', 'Cascais', 'Sintra'] },
+    { code: 'NL', name: 'Netherlands', nameAr: 'هولندا', lat: 52.132, lng: 5.291, cities: ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven', 'Groningen', 'Maastricht', 'Delft', 'Haarlem', 'Leiden'] },
+    { code: 'BE', name: 'Belgium', nameAr: 'بلجيكا', lat: 50.503, lng: 4.469, cities: ['Brussels', 'Antwerp', 'Ghent', 'Bruges', 'Liege', 'Charleroi', 'Leuven', 'Namur', 'Mons', 'Ostend'] },
+    { code: 'LU', name: 'Luxembourg', nameAr: 'لوكسمبورغ', lat: 49.815, lng: 6.129, cities: ['Luxembourg City', 'Esch-sur-Alzette', 'Differdange', 'Dudelange', 'Ettelbruck', 'Diekirch', 'Wiltz', 'Vianden', 'Echternach', 'Remich'] },
+    { code: 'CH', name: 'Switzerland', nameAr: 'سويسرا', lat: 46.818, lng: 8.227, cities: ['Zurich', 'Geneva', 'Basel', 'Bern', 'Lausanne', 'Lucerne', 'Lugano', 'St. Gallen', 'Winterthur', 'Fribourg'] },
+    { code: 'AT', name: 'Austria', nameAr: 'النمسا', lat: 47.516, lng: 14.55, cities: ['Vienna', 'Salzburg', 'Graz', 'Innsbruck', 'Linz', 'Klagenfurt', 'Bregenz', 'Villach', 'Wels', 'Sankt Pölten'] },
+    { code: 'PL', name: 'Poland', nameAr: 'بولندا', lat: 51.919, lng: 19.145, cities: ['Warsaw', 'Krakow', 'Gdansk', 'Wroclaw', 'Poznan', 'Lodz', 'Katowice', 'Szczecin', 'Lublin', 'Bydgoszcz'] },
+    { code: 'CZ', name: 'Czech Republic', nameAr: 'التشيك', lat: 49.817, lng: 15.472, cities: ['Prague', 'Brno', 'Ostrava', 'Plzen', 'Liberec', 'Olomouc', 'Hradec Kralove', 'Ceske Budejovice', 'Pardubice', 'Usti nad Labem'] },
+    { code: 'SK', name: 'Slovakia', nameAr: 'سلوفاكيا', lat: 48.669, lng: 19.699, cities: ['Bratislava', 'Kosice', 'Presov', 'Zilina', 'Nitra', 'Banska Bystrica', 'Trnava', 'Martin', 'Trencin', 'Poprad'] },
+    { code: 'HU', name: 'Hungary', nameAr: 'المجر', lat: 47.162, lng: 19.503, cities: ['Budapest', 'Debrecen', 'Szeged', 'Miskolc', 'Pecs', 'Gyor', 'Nyiregyhaza', 'Kecskemet', 'Szekesfehervar', 'Szombathely'] },
+    { code: 'RO', name: 'Romania', nameAr: 'رومانيا', lat: 45.943, lng: 24.966, cities: ['Bucharest', 'Cluj-Napoca', 'Timisoara', 'Iasi', 'Brasov', 'Constanta', 'Craiova', 'Sibiu', 'Oradea', 'Arad'] },
+    { code: 'BG', name: 'Bulgaria', nameAr: 'بلغاريا', lat: 42.733, lng: 25.485, cities: ['Sofia', 'Plovdiv', 'Varna', 'Burgas', 'Ruse', 'Stara Zagora', 'Pleven', 'Sliven', 'Dobrich', 'Shumen'] },
+    { code: 'GR', name: 'Greece', nameAr: 'اليونان', lat: 39.074, lng: 21.824, cities: ['Athens', 'Thessaloniki', 'Patras', 'Heraklion', 'Larissa', 'Volos', 'Rhodes', 'Corfu', 'Santorini', 'Mykonos'] },
+    { code: 'HR', name: 'Croatia', nameAr: 'كرواتيا', lat: 45.1, lng: 15.2, cities: ['Zagreb', 'Split', 'Dubrovnik', 'Rijeka', 'Zadar', 'Osijek', 'Pula', 'Sibenik', 'Varazdin', 'Karlovac'] },
+    { code: 'SI', name: 'Slovenia', nameAr: 'سلوفينيا', lat: 46.151, lng: 14.995, cities: ['Ljubljana', 'Maribor', 'Celje', 'Kranj', 'Koper', 'Nova Gorica', 'Ptuj', 'Murska Sobota', 'Jesenice', 'Trbovlje'] },
+    { code: 'BA', name: 'Bosnia and Herzegovina', nameAr: 'البوسنة والهرسك', lat: 43.915, lng: 17.679, cities: ['Sarajevo', 'Banja Luka', 'Mostar', 'Tuzla', 'Zenica', 'Bihac', 'Brcko', 'Doboj', 'Travnik', 'Trebinje'] },
+    { code: 'RS', name: 'Serbia', nameAr: 'صربيا', lat: 44.016, lng: 21.005, cities: ['Belgrade', 'Novi Sad', 'Nis', 'Kragujevac', 'Subotica', 'Zrenjanin', 'Pancevo', 'Cacak', 'Kraljevo', 'Smederevo'] },
+    { code: 'ME', name: 'Montenegro', nameAr: 'الجبل الأسود', lat: 42.708, lng: 19.374, cities: ['Podgorica', 'Niksic', 'Bar', 'Budva', 'Kotor', 'Herceg Novi', 'Cetinje', 'Ulcinj', 'Tivat', 'Bijelo Polje'] },
+    { code: 'MK', name: 'North Macedonia', nameAr: 'مقدونيا الشمالية', lat: 41.608, lng: 21.745, cities: ['Skopje', 'Bitola', 'Ohrid', 'Kumanovo', 'Tetovo', 'Prilep', 'Veles', 'Stip', 'Gostivar', 'Strumica'] },
+    { code: 'AL', name: 'Albania', nameAr: 'ألبانيا', lat: 41.153, lng: 20.168, cities: ['Tirana', 'Durres', 'Vlore', 'Shkoder', 'Elbasan', 'Fier', 'Korce', 'Berat', 'Sarande', 'Gjirokaster'] },
+    { code: 'XK', name: 'Kosovo', nameAr: 'كوسوفو', lat: 42.602, lng: 20.902, cities: ['Pristina', 'Prizren', 'Peja', 'Gjakova', 'Mitrovica', 'Ferizaj', 'Gjilan', 'Vushtrri', 'Podujevo', 'Rahovec'] },
+    { code: 'UA', name: 'Ukraine', nameAr: 'أوكرانيا', lat: 48.379, lng: 31.165, cities: ['Kyiv', 'Lviv', 'Kharkiv', 'Odesa', 'Dnipro', 'Zaporizhzhia', 'Vinnytsia', 'Poltava', 'Chernihiv', 'Mykolaiv'] },
+    { code: 'BY', name: 'Belarus', nameAr: 'بيلاروسيا', lat: 53.709, lng: 27.953, cities: ['Minsk', 'Brest', 'Gomel', 'Grodno', 'Mogilev', 'Vitebsk', 'Baranovichi', 'Pinsk', 'Orsha', 'Mozyr'] },
+    { code: 'MD', name: 'Moldova', nameAr: 'مولدوفا', lat: 47.411, lng: 28.369, cities: ['Chisinau', 'Balti', 'Tiraspol', 'Cahul', 'Soroca', 'Orhei', 'Ungheni', 'Comrat', 'Edinet', 'Hincesti'] },
+    { code: 'LT', name: 'Lithuania', nameAr: 'ليتوانيا', lat: 55.169, lng: 23.881, cities: ['Vilnius', 'Kaunas', 'Klaipeda', 'Siauliai', 'Panevezys', 'Alytus', 'Marijampole', 'Mazeikiai', 'Jonava', 'Utena'] },
+    { code: 'LV', name: 'Latvia', nameAr: 'لاتفيا', lat: 56.879, lng: 24.603, cities: ['Riga', 'Daugavpils', 'Liepaja', 'Jelgava', 'Jurmala', 'Ventspils', 'Rezekne', 'Valmiera', 'Ogre', 'Cesis'] },
+    { code: 'EE', name: 'Estonia', nameAr: 'إستونيا', lat: 58.595, lng: 25.013, cities: ['Tallinn', 'Tartu', 'Narva', 'Parnu', 'Kohtla-Jarve', 'Viljandi', 'Rakvere', 'Kuressaare', 'Haapsalu', 'Paide'] },
+    { code: 'FI', name: 'Finland', nameAr: 'فنلندا', lat: 61.924, lng: 25.748, cities: ['Helsinki', 'Tampere', 'Turku', 'Oulu', 'Espoo', 'Vantaa', 'Jyvaskyla', 'Lahti', 'Kuopio', 'Rovaniemi'] },
+    { code: 'SE', name: 'Sweden', nameAr: 'السويد', lat: 60.128, lng: 18.643, cities: ['Stockholm', 'Gothenburg', 'Malmo', 'Uppsala', 'Orebro', 'Vasteras', 'Linkoping', 'Helsingborg', 'Norrkoping', 'Lund'] },
+    { code: 'NO', name: 'Norway', nameAr: 'النرويج', lat: 60.472, lng: 8.468, cities: ['Oslo', 'Bergen', 'Trondheim', 'Stavanger', 'Tromso', 'Drammen', 'Kristiansand', 'Alesund', 'Bodo', 'Fredrikstad'] },
+    { code: 'DK', name: 'Denmark', nameAr: 'الدنمارك', lat: 56.263, lng: 9.501, cities: ['Copenhagen', 'Aarhus', 'Odense', 'Aalborg', 'Esbjerg', 'Randers', 'Kolding', 'Horsens', 'Vejle', 'Roskilde'] },
+    { code: 'IS', name: 'Iceland', nameAr: 'آيسلندا', lat: 64.963, lng: -19.02, cities: ['Reykjavik', 'Kopavogur', 'Hafnarfjordur', 'Akureyri', 'Reykjanesbaer', 'Selfoss', 'Vestmannaeyjar', 'Isafjordur', 'Egilsstadir', 'Hveragerdi'] },
+    { code: 'IE', name: 'Ireland', nameAr: 'أيرلندا', lat: 53.412, lng: -8.243, cities: ['Dublin', 'Cork', 'Galway', 'Limerick', 'Waterford', 'Drogheda', 'Dundalk', 'Sligo', 'Kilkenny', 'Wexford'] },
+    { code: 'RU', name: 'Russia', nameAr: 'روسيا', lat: 61.524, lng: 105.318, cities: ['Moscow', 'Saint Petersburg', 'Novosibirsk', 'Yekaterinburg', 'Kazan', 'Nizhny Novgorod', 'Chelyabinsk', 'Samara', 'Omsk', 'Rostov-on-Don'] },
+    { code: 'CY', name: 'Cyprus', nameAr: 'قبرص', lat: 35.126, lng: 33.429, cities: ['Nicosia', 'Limassol', 'Larnaca', 'Paphos', 'Famagusta', 'Kyrenia', 'Protaras', 'Ayia Napa', 'Morphou', 'Paralimni'] },
+    { code: 'MT', name: 'Malta', nameAr: 'مالطا', lat: 35.937, lng: 14.375, cities: ['Valletta', 'Birkirkara', 'Mosta', 'Qormi', 'Sliema', 'St. Julian\'s', 'Mdina', 'Rabat', 'Victoria', 'Marsaxlokk'] },
+    { code: 'AD', name: 'Andorra', nameAr: 'أندورا', lat: 42.506, lng: 1.521, cities: ['Andorra la Vella', 'Escaldes-Engordany', 'Encamp', 'Sant Julia', 'La Massana', 'Ordino', 'Canillo', 'Soldeu', 'El Pas de la Casa', 'Arinsal'] },
+    { code: 'MC', name: 'Monaco', nameAr: 'موناكو', lat: 43.738, lng: 7.425, cities: ['Monaco-Ville', 'Monte Carlo', 'La Condamine', 'Fontvieille', 'Moneghetti', 'Larvotto', 'Saint Roman', 'Saint Michel', 'Jardin Exotique', 'Vallon de la Rousse'] },
+    { code: 'LI', name: 'Liechtenstein', nameAr: 'ليختنشتاين', lat: 47.166, lng: 9.555, cities: ['Vaduz', 'Schaan', 'Balzers', 'Triesen', 'Eschen', 'Mauren', 'Triesenberg', 'Ruggell', 'Gamprin', 'Schellenberg'] },
+    { code: 'SM', name: 'San Marino', nameAr: 'سان مارينو', lat: 43.942, lng: 12.457, cities: ['San Marino City', 'Serravalle', 'Borgo Maggiore', 'Domagnano', 'Fiorentino', 'Acquaviva', 'Faetano', 'Montegiardino', 'Chiesanuova', 'Dogana'] },
+    { code: 'VA', name: 'Vatican City', nameAr: 'الفاتيكان', lat: 41.902, lng: 12.453, cities: ['Vatican City', 'St. Peter\'s Basilica', 'Vatican Museums', 'Sistine Chapel', 'St. Peter\'s Square', 'Vatican Gardens', 'Apostolic Palace', 'Necropolis', 'Vatican Library', 'Belvedere Courtyard'] },
+
+    // ============ أفريقيا ============
+    { code: 'NG', name: 'Nigeria', nameAr: 'نيجيريا', lat: 9.081, lng: 8.675, cities: ['Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt', 'Benin City', 'Kaduna', 'Enugu', 'Aba', 'Jos'] },
+    { code: 'ET', name: 'Ethiopia', nameAr: 'إثيوبيا', lat: 9.145, lng: 40.489, cities: ['Addis Ababa', 'Dire Dawa', 'Mekelle', 'Gondar', 'Bahir Dar', 'Hawassa', 'Jimma', 'Adama', 'Dessie', 'Jijiga'] },
+    { code: 'KE', name: 'Kenya', nameAr: 'كينيا', lat: -0.023, lng: 37.906, cities: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Malindi', 'Kitale', 'Garissa', 'Nyeri'] },
+    { code: 'TZ', name: 'Tanzania', nameAr: 'تنزانيا', lat: -6.369, lng: 34.888, cities: ['Dar es Salaam', 'Dodoma', 'Mwanza', 'Arusha', 'Zanzibar City', 'Mbeya', 'Morogoro', 'Tanga', 'Kigoma', 'Moshi'] },
+    { code: 'UG', name: 'Uganda', nameAr: 'أوغندا', lat: 1.373, lng: 32.29, cities: ['Kampala', 'Entebbe', 'Jinja', 'Mbarara', 'Gulu', 'Mbale', 'Fort Portal', 'Lira', 'Arua', 'Soroti'] },
+    { code: 'RW', name: 'Rwanda', nameAr: 'رواندا', lat: -1.94, lng: 29.873, cities: ['Kigali', 'Butare', 'Gitarama', 'Ruhengeri', 'Gisenyi', 'Byumba', 'Cyangugu', 'Kibuye', 'Nyanza', 'Muhanga'] },
+    { code: 'BI', name: 'Burundi', nameAr: 'بوروندي', lat: -3.373, lng: 29.918, cities: ['Bujumbura', 'Gitega', 'Muyinga', 'Ngozi', 'Ruyigi', 'Bururi', 'Makamba', 'Cankuzo', 'Karuzi', 'Kirundo'] },
+    { code: 'ZA', name: 'South Africa', nameAr: 'جنوب أفريقيا', lat: -30.559, lng: 22.937, cities: ['Cape Town', 'Johannesburg', 'Durban', 'Pretoria', 'Port Elizabeth', 'Bloemfontein', 'East London', 'Kimberley', 'Nelspruit', 'Polokwane'] },
+    { code: 'ZW', name: 'Zimbabwe', nameAr: 'زيمبابوي', lat: -19.015, lng: 29.154, cities: ['Harare', 'Bulawayo', 'Mutare', 'Gweru', 'Masvingo', 'Chinhoyi', 'Kwekwe', 'Kadoma', 'Marondera', 'Vic Falls'] },
+    { code: 'ZM', name: 'Zambia', nameAr: 'زامبيا', lat: -13.133, lng: 27.849, cities: ['Lusaka', 'Kitwe', 'Ndola', 'Livingstone', 'Kabwe', 'Chipata', 'Luanshya', 'Chingola', 'Mufulira', 'Kasama'] },
+    { code: 'MW', name: 'Malawi', nameAr: 'مالاوي', lat: -13.254, lng: 34.301, cities: ['Lilongwe', 'Blantyre', 'Mzuzu', 'Zomba', 'Kasungu', 'Mangochi', 'Karonga', 'Salima', 'Nkhata Bay', 'Dedza'] },
+    { code: 'MZ', name: 'Mozambique', nameAr: 'موزمبيق', lat: -18.665, lng: 35.529, cities: ['Maputo', 'Beira', 'Nampula', 'Matola', 'Quelimane', 'Tete', 'Pemba', 'Inhambane', 'Chimoio', 'Xai-Xai'] },
+    { code: 'MG', name: 'Madagascar', nameAr: 'مدغشقر', lat: -18.766, lng: 46.869, cities: ['Antananarivo', 'Toamasina', 'Antsirabe', 'Fianarantsoa', 'Mahajanga', 'Toliara', 'Antsiranana', 'Morondava', 'Nosy Be', 'Antalaha'] },
+    { code: 'MU', name: 'Mauritius', nameAr: 'موريشيوس', lat: -20.348, lng: 57.552, cities: ['Port Louis', 'Curepipe', 'Quatre Bornes', 'Vacoas', 'Beau Bassin', 'Rose Hill', 'Mahebourg', 'Flic en Flac', 'Grand Baie', 'Tamarin'] },
+    { code: 'SC', name: 'Seychelles', nameAr: 'سيشل', lat: -4.679, lng: 55.491, cities: ['Victoria', 'Anse Boileau', 'Beau Vallon', 'Anse Royale', 'Takamaka', 'Baie Lazare', 'Praslin', 'La Digue', 'Cerf Island', 'Silhouette'] },
+    { code: 'BW', name: 'Botswana', nameAr: 'بوتسوانا', lat: -22.328, lng: 24.684, cities: ['Gaborone', 'Francistown', 'Maun', 'Molepolole', 'Serowe', 'Kanye', 'Mahalapye', 'Lobatse', 'Selebi-Phikwe', 'Kasane'] },
+    { code: 'NA', name: 'Namibia', nameAr: 'ناميبيا', lat: -22.957, lng: 18.49, cities: ['Windhoek', 'Swakopmund', 'Walvis Bay', 'Oshakati', 'Rundu', 'Otjiwarongo', 'Rehoboth', 'Gobabis', 'Keetmanshoop', 'Luderitz'] },
+    { code: 'AO', name: 'Angola', nameAr: 'أنغولا', lat: -11.202, lng: 17.873, cities: ['Luanda', 'Huambo', 'Lobito', 'Benguela', 'Lubango', 'Malanje', 'Namibe', 'Soyo', 'Cabinda', 'Uige'] },
+    { code: 'CG', name: 'Congo Republic', nameAr: 'الكونغو', lat: -0.228, lng: 15.827, cities: ['Brazzaville', 'Pointe-Noire', 'Dolisie', 'Nkayi', 'Owando', 'Ouesso', 'Impfondo', 'Sibiti', 'Madingou', 'Kinkala'] },
+    { code: 'CD', name: 'DR Congo', nameAr: 'الكونغو الديمقراطية', lat: -4.038, lng: 21.758, cities: ['Kinshasa', 'Lubumbashi', 'Goma', 'Bukavu', 'Kisangani', 'Mbuji-Mayi', 'Kananga', 'Matadi', 'Likasi', 'Kolwezi'] },
+    { code: 'GA', name: 'Gabon', nameAr: 'الغابون', lat: -0.803, lng: 11.609, cities: ['Libreville', 'Port-Gentil', 'Franceville', 'Oyem', 'Moanda', 'Lambarene', 'Koulamoutou', 'Tchibanga', 'Mouila', 'Makokou'] },
+    { code: 'CM', name: 'Cameroon', nameAr: 'الكاميرون', lat: 7.369, lng: 12.354, cities: ['Yaounde', 'Douala', 'Bamenda', 'Bafoussam', 'Garoua', 'Maroua', 'Ngaoundere', 'Kumba', 'Buea', 'Limbe'] },
+    { code: 'CF', name: 'Central African Republic', nameAr: 'أفريقيا الوسطى', lat: 6.611, lng: 20.939, cities: ['Bangui', 'Bimbo', 'Berberati', 'Carnot', 'Bambari', 'Bouar', 'Bossangoa', 'Nola', 'Bangassou', 'Kaga-Bandoro'] },
+    { code: 'TD', name: 'Chad', nameAr: 'تشاد', lat: 15.454, lng: 18.732, cities: ['N\'Djamena', 'Moundou', 'Sarh', 'Abeche', 'Kelo', 'Koumra', 'Pala', 'Am Timan', 'Bongor', 'Mongo'] },
+    { code: 'NE', name: 'Niger', nameAr: 'النيجر', lat: 17.607, lng: 8.081, cities: ['Niamey', 'Zinder', 'Maradi', 'Agadez', 'Tahoua', 'Dosso', 'Diffa', 'Gaya', 'Birni Nkonni', 'Tillaberi'] },
+    { code: 'ML', name: 'Mali', nameAr: 'مالي', lat: 17.57, lng: -3.996, cities: ['Bamako', 'Sikasso', 'Mopti', 'Segou', 'Gao', 'Kayes', 'Timbuktu', 'Kidal', 'Koulikoro', 'Djenné'] },
+    { code: 'BF', name: 'Burkina Faso', nameAr: 'بوركينا فاسو', lat: 12.238, lng: -1.561, cities: ['Ouagadougou', 'Bobo-Dioulasso', 'Koudougou', 'Ouahigouya', 'Banfora', 'Kaya', 'Fada N\'gourma', 'Dedougou', 'Tenkodogo', 'Dori'] },
+    { code: 'SN', name: 'Senegal', nameAr: 'السنغال', lat: 14.497, lng: -14.452, cities: ['Dakar', 'Touba', 'Thies', 'Saint-Louis', 'Kaolack', 'Ziguinchor', 'Mbour', 'Diourbel', 'Louga', 'Tambacounda'] },
+    { code: 'GM', name: 'Gambia', nameAr: 'غامبيا', lat: 13.443, lng: -15.31, cities: ['Banjul', 'Serekunda', 'Brikama', 'Bakau', 'Farafenni', 'Lamin', 'Basse Santa Su', 'Gunjur', 'Soma', 'Janjanbureh'] },
+    { code: 'GW', name: 'Guinea-Bissau', nameAr: 'غينيا بيساو', lat: 11.803, lng: -15.18, cities: ['Bissau', 'Bafata', 'Gabu', 'Bissora', 'Bolama', 'Cacheu', 'Catio', 'Buba', 'Farim', 'Mansoa'] },
+    { code: 'GN', name: 'Guinea', nameAr: 'غينيا', lat: 9.945, lng: -9.696, cities: ['Conakry', 'Nzerekore', 'Kankan', 'Kindia', 'Labe', 'Mamou', 'Boke', 'Faranah', 'Kissidougou', 'Gueckedou'] },
+    { code: 'SL', name: 'Sierra Leone', nameAr: 'سيراليون', lat: 8.46, lng: -11.779, cities: ['Freetown', 'Bo', 'Kenema', 'Makeni', 'Koidu', 'Lunsar', 'Port Loko', 'Waterloo', 'Kabala', 'Moyamba'] },
+    { code: 'LR', name: 'Liberia', nameAr: 'ليبيريا', lat: 6.428, lng: -9.429, cities: ['Monrovia', 'Gbarnga', 'Buchanan', 'Ganta', 'Kakata', 'Harbel', 'Zwedru', 'Harper', 'Voinjama', 'Robertsport'] },
+    { code: 'CI', name: 'Ivory Coast', nameAr: 'ساحل العاج', lat: 7.539, lng: -5.547, cities: ['Abidjan', 'Yamoussoukro', 'Bouake', 'Daloa', 'San-Pedro', 'Korhogo', 'Man', 'Divo', 'Gagnoa', 'Abengourou'] },
+    { code: 'GH', name: 'Ghana', nameAr: 'غانا', lat: 7.946, lng: -1.023, cities: ['Accra', 'Kumasi', 'Tamale', 'Sekondi-Takoradi', 'Cape Coast', 'Sunyani', 'Ho', 'Tema', 'Obuasi', 'Koforidua'] },
+    { code: 'TG', name: 'Togo', nameAr: 'توغو', lat: 8.619, lng: 0.824, cities: ['Lome', 'Sokode', 'Kara', 'Kpalime', 'Atakpame', 'Bassar', 'Tsevie', 'Aneho', 'Dapaong', 'Niamtougou'] },
+    { code: 'BJ', name: 'Benin', nameAr: 'بنين', lat: 9.307, lng: 2.315, cities: ['Cotonou', 'Porto-Novo', 'Parakou', 'Abomey', 'Natitingou', 'Bohicon', 'Djougou', 'Ouidah', 'Lokossa', 'Save'] },
+    { code: 'CV', name: 'Cape Verde', nameAr: 'الرأس الأخضر', lat: 15.12, lng: -23.605, cities: ['Praia', 'Mindelo', 'Santa Maria', 'Assomada', 'Pedra Badejo', 'Espargos', 'Ribeira Grande', 'Tarrafal', 'Sal Rei', 'Porto Novo'] },
+    { code: 'ST', name: 'Sao Tome and Principe', nameAr: 'ساو تومي', lat: 0.186, lng: 6.613, cities: ['Sao Tome', 'Santo Antonio', 'Neves', 'Santana', 'Trindade', 'Guadalupe', 'Ribeira Afonso', 'Sao Joao dos Angolares', 'Porto Alegre', 'Santa Cruz'] },
+    { code: 'GQ', name: 'Equatorial Guinea', nameAr: 'غينيا الاستوائية', lat: 1.65, lng: 10.267, cities: ['Malabo', 'Bata', 'Ebebiyin', 'Aconibe', 'Mongomo', 'Evinayong', 'Luba', 'Annobon', 'Moca', 'Niefang'] },
+    { code: 'SS', name: 'South Sudan', nameAr: 'جنوب السودان', lat: 6.876, lng: 31.306, cities: ['Juba', 'Wau', 'Malakal', 'Yei', 'Yambio', 'Aweil', 'Rumbek', 'Bor', 'Torit', 'Nimule'] },
+    { code: 'ER', name: 'Eritrea', nameAr: 'إريتريا', lat: 15.179, lng: 39.782, cities: ['Asmara', 'Massawa', 'Keren', 'Assab', 'Mendefera', 'Barentu', 'Dekemhare', 'Agordat', 'Adi Keyh', 'Nakfa'] },
+    { code: 'LS', name: 'Lesotho', nameAr: 'ليسوتو', lat: -29.609, lng: 28.233, cities: ['Maseru', 'Teyateyaneng', 'Mafeteng', 'Mohale\'s Hoek', 'Leribe', 'Quthing', 'Butha-Buthe', 'Mokhotlong', 'Qacha\'s Nek', 'Thaba-Tseka'] },
+    { code: 'SZ', name: 'Eswatini', nameAr: 'إسواتيني', lat: -26.522, lng: 31.465, cities: ['Mbabane', 'Manzini', 'Lobamba', 'Siteki', 'Nhlangano', 'Big Bend', 'Malkerns', 'Piggs Peak', 'Hluti', 'Mhlume'] },
+
+    // ============ أمريكا الشمالية ============
+    { code: 'US', name: 'United States', nameAr: 'أمريكا', lat: 37.09, lng: -95.71, cities: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Miami', 'San Francisco', 'Seattle', 'Boston', 'Dallas', 'Phoenix'] },
+    { code: 'CA', name: 'Canada', nameAr: 'كندا', lat: 56.13, lng: -106.34, cities: ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Ottawa', 'Edmonton', 'Winnipeg', 'Quebec City', 'Halifax', 'Victoria'] },
+    { code: 'MX', name: 'Mexico', nameAr: 'المكسيك', lat: 23.634, lng: -102.552, cities: ['Mexico City', 'Guadalajara', 'Monterrey', 'Cancun', 'Tijuana', 'Puebla', 'Merida', 'Oaxaca', 'Puerto Vallarta', 'Los Cabos'] },
+    { code: 'GT', name: 'Guatemala', nameAr: 'غواتيمالا', lat: 15.783, lng: -90.23, cities: ['Guatemala City', 'Antigua', 'Quetzaltenango', 'Escuintla', 'Chichicastenango', 'Flores', 'Coban', 'Puerto Barrios', 'Mazatenango', 'Huehuetenango'] },
+    { code: 'BZ', name: 'Belize', nameAr: 'بليز', lat: 17.189, lng: -88.497, cities: ['Belize City', 'Belmopan', 'San Pedro', 'Orange Walk', 'Corozal', 'Dangriga', 'San Ignacio', 'Placencia', 'Punta Gorda', 'Caye Caulker'] },
+    { code: 'SV', name: 'El Salvador', nameAr: 'السلفادور', lat: 13.794, lng: -88.896, cities: ['San Salvador', 'Santa Ana', 'San Miguel', 'Sonsonate', 'Santa Tecla', 'La Libertad', 'Ahuachapan', 'Usulutan', 'Cojutepeque', 'Zacatecoluca'] },
+    { code: 'HN', name: 'Honduras', nameAr: 'هندوراس', lat: 15.199, lng: -86.241, cities: ['Tegucigalpa', 'San Pedro Sula', 'La Ceiba', 'Roatan', 'Comayagua', 'Choloma', 'El Progreso', 'Puerto Cortes', 'Choluteca', 'Juticalpa'] },
+    { code: 'NI', name: 'Nicaragua', nameAr: 'نيكاراغوا', lat: 12.865, lng: -85.207, cities: ['Managua', 'Leon', 'Granada', 'Masaya', 'Matagalpa', 'Esteli', 'Chinandega', 'Jinotepe', 'Rivas', 'Bluefields'] },
+    { code: 'CR', name: 'Costa Rica', nameAr: 'كوستاريكا', lat: 9.748, lng: -83.753, cities: ['San Jose', 'Alajuela', 'Cartago', 'Heredia', 'Liberia', 'Puerto Limon', 'Puntarenas', 'Tamarindo', 'Jaco', 'Monteverde'] },
+    { code: 'PA', name: 'Panama', nameAr: 'بنما', lat: 8.537, lng: -80.782, cities: ['Panama City', 'Colon', 'David', 'Santiago', 'Chitre', 'Penonome', 'Bocas del Toro', 'Boquete', 'El Valle', 'Portobelo'] },
+
+    // ============ الكاريبي ============
+    { code: 'CU', name: 'Cuba', nameAr: 'كوبا', lat: 21.521, lng: -77.781, cities: ['Havana', 'Santiago de Cuba', 'Camaguey', 'Holguin', 'Santa Clara', 'Trinidad', 'Cienfuegos', 'Varadero', 'Matanzas', 'Pinar del Rio'] },
+    { code: 'JM', name: 'Jamaica', nameAr: 'جامايكا', lat: 18.109, lng: -77.297, cities: ['Kingston', 'Montego Bay', 'Ocho Rios', 'Negril', 'Portmore', 'Spanish Town', 'Mandeville', 'Falmouth', 'Port Antonio', 'Savanna-la-Mar'] },
+    { code: 'HT', name: 'Haiti', nameAr: 'هايتي', lat: 18.971, lng: -72.285, cities: ['Port-au-Prince', 'Cap-Haitien', 'Gonaives', 'Les Cayes', 'Jacmel', 'Jeremie', 'Hinche', 'Miragoane', 'Fort-Liberte', 'Saint-Marc'] },
+    { code: 'DO', name: 'Dominican Republic', nameAr: 'الدومينيكان', lat: 18.735, lng: -70.162, cities: ['Santo Domingo', 'Santiago', 'Punta Cana', 'La Romana', 'Puerto Plata', 'San Pedro de Macoris', 'Higuey', 'Bavaro', 'Samana', 'La Vega'] },
+    { code: 'PR', name: 'Puerto Rico', nameAr: 'بورتوريكو', lat: 18.22, lng: -66.59, cities: ['San Juan', 'Ponce', 'Mayaguez', 'Caguas', 'Bayamon', 'Carolina', 'Arecibo', 'Fajardo', 'Vieques', 'Culebra'] },
+    { code: 'BS', name: 'Bahamas', nameAr: 'الباهاماس', lat: 25.034, lng: -77.396, cities: ['Nassau', 'Freeport', 'Marsh Harbour', 'George Town', 'Bimini', 'Eleuthera', 'Andros', 'Abaco', 'Long Island', 'Harbour Island'] },
+    { code: 'BB', name: 'Barbados', nameAr: 'باربادوس', lat: 13.193, lng: -59.543, cities: ['Bridgetown', 'Speightstown', 'Oistins', 'Holetown', 'Bathsheba', 'Crane', 'Six Cross Roads', 'Greenland', 'Welchman Hall', 'Saint Lawrence Gap'] },
+    { code: 'TT', name: 'Trinidad and Tobago', nameAr: 'ترينيداد وتوباغو', lat: 10.691, lng: -61.222, cities: ['Port of Spain', 'San Fernando', 'Arima', 'Chaguanas', 'Scarborough', 'Point Fortin', 'Siparia', 'Tunapuna', 'Couva', 'Princes Town'] },
+    { code: 'AG', name: 'Antigua and Barbuda', nameAr: 'أنتيغوا وباربودا', lat: 17.06, lng: -61.796, cities: ['St. John\'s', 'English Harbour', 'Codrington', 'Falmouth', 'Parham', 'All Saints', 'Liberta', 'Bolans', 'Dickenson Bay', 'Jolly Harbour'] },
+    { code: 'LC', name: 'Saint Lucia', nameAr: 'سانت لوسيا', lat: 13.909, lng: -60.978, cities: ['Castries', 'Gros Islet', 'Soufriere', 'Vieux Fort', 'Marigot', 'Dennery', 'Anse La Raye', 'Laborie', 'Choiseul', 'Micoud'] },
+    { code: 'GD', name: 'Grenada', nameAr: 'غرينادا', lat: 12.116, lng: -61.679, cities: ['St. George\'s', 'Gouyave', 'Grenville', 'Victoria', 'Sauteurs', 'Hillsborough', 'True Blue', 'Grand Anse', 'Morne Rouge', 'Lance aux Epines'] },
+    { code: 'VC', name: 'Saint Vincent and the Grenadines', nameAr: 'سانت فنسنت', lat: 12.984, lng: -61.287, cities: ['Kingstown', 'Georgetown', 'Byera', 'Barrouallie', 'Bequia', 'Mustique', 'Union Island', 'Canouan', 'Mayreau', 'Tobago Cays'] },
+
+    // ============ أمريكا الجنوبية ============
+    { code: 'BR', name: 'Brazil', nameAr: 'البرازيل', lat: -14.235, lng: -51.925, cities: ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador', 'Fortaleza', 'Belo Horizonte', 'Manaus', 'Curitiba', 'Recife', 'Florianopolis'] },
+    { code: 'AR', name: 'Argentina', nameAr: 'الأرجنتين', lat: -38.416, lng: -63.616, cities: ['Buenos Aires', 'Cordoba', 'Rosario', 'Mendoza', 'La Plata', 'Salta', 'Bariloche', 'Ushuaia', 'Mar del Plata', 'San Carlos de Bariloche'] },
+    { code: 'CL', name: 'Chile', nameAr: 'تشيلي', lat: -35.675, lng: -71.543, cities: ['Santiago', 'Valparaiso', 'Viña del Mar', 'Antofagasta', 'Concepcion', 'La Serena', 'Puerto Montt', 'Punta Arenas', 'Iquique', 'Temuco'] },
+    { code: 'PE', name: 'Peru', nameAr: 'بيرو', lat: -9.189, lng: -75.015, cities: ['Lima', 'Cusco', 'Arequipa', 'Trujillo', 'Machu Picchu', 'Iquitos', 'Chiclayo', 'Piura', 'Puno', 'Nazca'] },
+    { code: 'CO', name: 'Colombia', nameAr: 'كولومبيا', lat: 4.57, lng: -74.297, cities: ['Bogotá', 'Medellin', 'Cali', 'Cartagena', 'Barranquilla', 'Santa Marta', 'Bucaramanga', 'Pereira', 'Manizales', 'San Andres'] },
+    { code: 'VE', name: 'Venezuela', nameAr: 'فنزويلا', lat: 6.423, lng: -66.589, cities: ['Caracas', 'Maracaibo', 'Valencia', 'Barquisimeto', 'Maracay', 'Ciudad Guayana', 'Merida', 'Coro', 'Cumana', 'Puerto La Cruz'] },
+    { code: 'EC', name: 'Ecuador', nameAr: 'الإكوادور', lat: -1.831, lng: -78.183, cities: ['Quito', 'Guayaquil', 'Cuenca', 'Galapagos', 'Manta', 'Ambato', 'Loja', 'Esmeraldas', 'Riobamba', 'Salinas'] },
+    { code: 'BO', name: 'Bolivia', nameAr: 'بوليفيا', lat: -16.29, lng: -63.588, cities: ['La Paz', 'Santa Cruz', 'Cochabamba', 'Sucre', 'Potosi', 'Oruro', 'Tarija', 'Uyuni', 'Rurrenabaque', 'Copacabana'] },
+    { code: 'PY', name: 'Paraguay', nameAr: 'باراغواي', lat: -23.442, lng: -58.443, cities: ['Asunción', 'Ciudad del Este', 'Encarnacion', 'Pedro Juan Caballero', 'San Lorenzo', 'Luque', 'Concepcion', 'Villarrica', 'Coronel Oviedo', 'Pilar'] },
+    { code: 'UY', name: 'Uruguay', nameAr: 'أوروغواي', lat: -32.522, lng: -55.765, cities: ['Montevideo', 'Punta del Este', 'Colonia del Sacramento', 'Salto', 'Paysandu', 'Rivera', 'Maldonado', 'Tacuarembo', 'La Paloma', 'Piriapolis'] },
+    { code: 'GY', name: 'Guyana', nameAr: 'غيانا', lat: 4.86, lng: -58.93, cities: ['Georgetown', 'Linden', 'New Amsterdam', 'Anna Regina', 'Bartica', 'Lethem', 'Mabaruma', 'Mahdia', 'Corriverton', 'Paramakatoi'] },
+    { code: 'SR', name: 'Suriname', nameAr: 'سورينام', lat: 3.919, lng: -56.027, cities: ['Paramaribo', 'Lelydorp', 'Nieuw Nickerie', 'Moengo', 'Albina', 'Brokopondo', 'Onverwacht', 'Totness', 'Groningen', 'Wageningen'] },
+    { code: 'GF', name: 'French Guiana', nameAr: 'غويانا الفرنسية', lat: 3.933, lng: -53.125, cities: ['Cayenne', 'Kourou', 'Saint-Laurent-du-Maroni', 'Remire-Montjoly', 'Matoury', 'Sinnamary', 'Mana', 'Apatou', 'Roura', 'Iracoubo'] },
+
+    // ============ أستراليا وأوقيانوسيا ============
+    { code: 'AU', name: 'Australia', nameAr: 'أستراليا', lat: -25.274, lng: 133.775, cities: ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Canberra', 'Gold Coast', 'Darwin', 'Hobart', 'Cairns'] },
+    { code: 'NZ', name: 'New Zealand', nameAr: 'نيوزيلندا', lat: -40.9, lng: 174.886, cities: ['Auckland', 'Wellington', 'Christchurch', 'Queenstown', 'Hamilton', 'Dunedin', 'Tauranga', 'Rotorua', 'Napier', 'Nelson'] },
+    { code: 'FJ', name: 'Fiji', nameAr: 'فيجي', lat: -17.713, lng: 178.065, cities: ['Suva', 'Nadi', 'Lautoka', 'Labasa', 'Ba', 'Levuka', 'Sigatoka', 'Rakiraki', 'Savusavu', 'Taveuni'] },
+    { code: 'PG', name: 'Papua New Guinea', nameAr: 'بابوا غينيا الجديدة', lat: -6.314, lng: 143.955, cities: ['Port Moresby', 'Lae', 'Mount Hagen', 'Madang', 'Wewak', 'Goroka', 'Rabaul', 'Kimbe', 'Kokopo', 'Alotau'] },
+    { code: 'SB', name: 'Solomon Islands', nameAr: 'جزر سليمان', lat: -9.645, lng: 160.156, cities: ['Honiara', 'Gizo', 'Auki', 'Munda', 'Kirakira', 'Tulagi', 'Buala', 'Noroh', 'Lata', 'Tigoa'] },
+    { code: 'VU', name: 'Vanuatu', nameAr: 'فانواتو', lat: -15.376, lng: 166.959, cities: ['Port Vila', 'Luganville', 'Isangel', 'Sola', 'Lakatoro', 'Saratamata', 'Lenakel', 'Fayaoue', 'Lumlum', 'Havannah'] },
+    { code: 'WS', name: 'Samoa', nameAr: 'ساموا', lat: -13.759, lng: -172.104, cities: ['Apia', 'Salelologa', 'Asau', 'Mulifanua', 'Faleula', 'Leulumoega', 'Lalomanu', 'Poutasi', 'Safotu', 'Saleaula'] },
+    { code: 'TO', name: 'Tonga', nameAr: 'تونغا', lat: -21.178, lng: -175.198, cities: ['Nuku\'alofa', 'Neiafu', 'Haveluloto', 'Pangai', 'Ohonua', 'Vaini', 'Tofoa', 'Kolonga', 'Puke', 'Fua\'amotu'] },
+    { code: 'KI', name: 'Kiribati', nameAr: 'كيريباتي', lat: 1.87, lng: -157.362, cities: ['Tarawa', 'Kiritimati', 'Butaritari', 'Abaiang', 'Marakei', 'Tabiteuea', 'Beru', 'Nikunau', 'Onotoa', 'Tamana'] },
+    { code: 'FM', name: 'Micronesia', nameAr: 'ميكرونيزيا', lat: 6.887, lng: 158.215, cities: ['Palikir', 'Weno', 'Kolonia', 'Tofol', 'Colonia', 'Lelu', 'Moen', 'Nett', 'U', 'Fais'] },
+    { code: 'MH', name: 'Marshall Islands', nameAr: 'جزر مارشال', lat: 7.131, lng: 171.184, cities: ['Majuro', 'Ebeye', 'Jabor', 'Wotje', 'Rongelap', 'Kwajalein', 'Ailuk', 'Arno', 'Likiep', 'Namu'] },
+    { code: 'PW', name: 'Palau', nameAr: 'بالاو', lat: 7.514, lng: 134.582, cities: ['Ngerulmud', 'Koror', 'Airai', 'Melekeok', 'Ngaraard', 'Ngarchelong', 'Angaur', 'Peleliu', 'Sonsorol', 'Hatohobei'] },
+    { code: 'NR', name: 'Nauru', nameAr: 'ناورو', lat: -0.522, lng: 166.931, cities: ['Yaren', 'Denigomodu', 'Aiwo', 'Anabar', 'Anetan', 'Boe', 'Buada', 'Ewa', 'Ijuw', 'Meneng'] },
+    { code: 'TV', name: 'Tuvalu', nameAr: 'توفالو', lat: -7.109, lng: 177.649, cities: ['Funafuti', 'Vaiaku', 'Asau', 'Savave', 'Tanrake', 'Toga', 'Kulia', 'Lolua', 'Fongafale', 'Senala'] },
+    { code: 'CK', name: 'Cook Islands', nameAr: 'جزر كوك', lat: -21.236, lng: -159.777, cities: ['Avarua', 'Arorangi', 'Titikaveka', 'Matavera', 'Ngatangiia', 'Ruatonga', 'Nikao', 'Panama', 'Puaikura', 'Takitumu'] },
+];
+
+
+        // ============================================
+        // 🗺️ الخريطة
+        // ============================================
+        const map = L.map('map').setView([25.0, 45.0], 4);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CARTO', maxZoom: 19
+        }).addTo(map);
+        const markersLayer = L.layerGroup().addTo(map);
+        let userMarker = null, userCircle = null;
+
+        // ============================================
+        // تعبئة الفلاتر
+        // ============================================
+        const countryFilter = document.getElementById('countryFilter');
+        const regCountryFilter = document.getElementById('regCountry');
+        const editCountryFilter = document.getElementById('editCountry');
+        const cityFilter = document.getElementById('cityFilter');
+
+        function populateCountryFilter() {
+            const t = translations[currentLang];
+            [countryFilter, regCountryFilter, editCountryFilter].forEach(select => {
+                if (!select) return;
+                select.innerHTML = `<option value="">${t.allCountries}</option>`;
+                countriesData.forEach(c => {
+                    const name = currentLang === 'ar' ? c.nameAr : c.name;
+                    select.innerHTML += `<option value="${c.code}">${name}</option>`;
+                });
+            });
+        }
+
+        function populateCityFilter(code) {
+            const t = translations[currentLang];
+            cityFilter.innerHTML = `<option value="">${t.allCities}</option>`;
+            if (!code) return;
+            const country = countriesData.find(c => c.code === code);
+            if (country) country.cities.forEach(city => cityFilter.innerHTML += `<option value="${city}">${city}</option>`);
+        }
+
+        countryFilter.addEventListener('change', () => populateCityFilter(countryFilter.value));
+
+        // ============================================
+        // 📥 تحميل البيانات من Firebase
+        // ============================================
+        async function loadProvidersFromFirebase() {
+            const snapshot = await db.collection('providers').get();
+            serviceProviders = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                data.id = doc.id;
+                serviceProviders.push(data);
+            });
+            
+            if (serviceProviders.length === 0) {
+                const defaultProviders = [
+                    { name: 'أحمد محمد', profession1: 'مدرس إنجليزي', profession2: 'مترجم قانوني', phone1: '+966501234567', phone2: '+966551234567', whatsapp: '+966501234567', email: 'ahmed@email.com', country: 'SA', city: 'Riyadh', price: '$20/ساعة', workHours: '4م - 10م', desc: 'خبرة 5 سنوات، تحضير IELTS و TOEFL.', lat: 24.7136, lng: 46.6753, rating: 4.8, ratingCount: 1, reviews: 120, verified: true, premium: false, views: 0, clicks: 0, photo: '', gallery: [] },
+                    { name: 'سارة علي', profession1: 'ممرضة', profession2: '', phone1: '+966551234567', phone2: '', whatsapp: '+966551234567', email: 'sara@email.com', country: 'SA', city: 'Jeddah', price: '', workHours: '8ص - 8م', desc: 'ممرضة معتمدة، رعاية منزلية.', lat: 21.4858, lng: 39.1925, rating: 4.9, ratingCount: 1, reviews: 85, verified: true, premium: false, views: 0, clicks: 0, photo: '', gallery: [] },
+                    { name: 'عمر خالد', profession1: 'سباك', profession2: 'كهربائي', phone1: '+966541234567', phone2: '+966561234567', whatsapp: '+966541234567', email: '', country: 'SA', city: 'Dammam', price: '', workHours: '24 ساعة', desc: 'تصليح جميع الأعطال المنزلية.', lat: 26.4207, lng: 50.0888, rating: 4.5, ratingCount: 1, reviews: 45, verified: false, premium: false, views: 0, clicks: 0, photo: '', gallery: [] },
+                    { name: 'ليلى حسن', profession1: 'مصممة جرافيك', profession2: 'مسوقة', phone1: '+971501234567', phone2: '', whatsapp: '+971501234567', email: 'laila@email.com', country: 'AE', city: 'Dubai', price: '$30/ساعة', workHours: '10ص - 6م', desc: 'تصميم شعارات وهويات تجارية.', lat: 25.2048, lng: 55.2708, rating: 4.7, ratingCount: 1, reviews: 95, verified: true, premium: false, views: 0, clicks: 0, photo: '', gallery: [] },
+                    { name: 'كريم محمود', profession1: 'مطور برمجيات', profession2: 'مدرس برمجة', phone1: '+201001234567', phone2: '+201001234568', whatsapp: '+201001234567', email: 'karim@email.com', country: 'EG', city: 'Cairo', price: '$25/ساعة', workHours: '6م - 12ص', desc: 'تطوير مواقع وتطبيقات.', lat: 30.0444, lng: 31.2357, rating: 4.6, ratingCount: 1, reviews: 60, verified: true, premium: false, views: 0, clicks: 0, photo: '', gallery: [] },
+                    { name: 'فاطمة عبدالله', profession1: 'طبيبة أسنان', profession2: '', phone1: '+966561234567', phone2: '', whatsapp: '+966561234567', email: 'fatima@email.com', country: 'SA', city: 'Riyadh', price: '', workHours: '9ص - 9م', desc: 'عيادة أسنان متكاملة.', lat: 24.7743, lng: 46.7386, rating: 4.9, ratingCount: 1, reviews: 200, verified: true, premium: false, views: 0, clicks: 0, photo: '', gallery: [] },
+                    { name: 'John Smith', profession1: 'English Teacher', profession2: 'Consultant', phone1: '+447001234567', phone2: '', whatsapp: '+447001234567', email: 'john@email.com', country: 'GB', city: 'London', price: '£25/hr', workHours: '9AM - 5PM', desc: 'Native speaker, 10 years.', lat: 51.5074, lng: -0.1278, rating: 4.8, ratingCount: 1, reviews: 150, verified: true, premium: false, views: 0, clicks: 0, photo: '', gallery: [] },
+                    { name: 'محمد الأمين', profession1: 'محاسب', profession2: 'مستشار ضرائب', phone1: '+97450123456', phone2: '+97450123457', whatsapp: '+97450123456', email: 'mohamed@email.com', country: 'QA', city: 'Doha', price: '', workHours: '8ص - 4م', desc: 'محاسب قانوني معتمد.', lat: 25.2854, lng: 51.531, rating: 4.4, ratingCount: 1, reviews: 35, verified: true, premium: false, views: 0, clicks: 0, photo: '', gallery: [] },
+                ];
+                for (const p of defaultProviders) {
+                    await db.collection('providers').add(p);
+                }
+                const snapshot2 = await db.collection('providers').get();
+                serviceProviders = [];
+                snapshot2.forEach(doc => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    serviceProviders.push(data);
+                });
+            }
+            
+            await loadAdminPasswordFromFirebase();
+            await updateVisitorCount();
+            displayServices(serviceProviders);
+            displayMarkers(serviceProviders);
+            populateCountryFilter();
+        }
+
+        // ============================================
+        // 📥 تحميل كلمة مرور الأدمن من Firebase
+        // ============================================
+        async function loadAdminPasswordFromFirebase() {
+            const doc = await db.collection('settings').doc('admin').get();
+            if (doc.exists) {
+                adminPassword = doc.data().password || 'admin123';
+            } else {
+                await db.collection('settings').doc('admin').set({ password: 'admin123' });
+                adminPassword = 'admin123';
+            }
+        }
+
+        // ============================================
+        // 👀 عداد الزوار (Firebase)
+        // ============================================
+        async function updateVisitorCount() {
+            const docRef = db.collection('stats').doc('visitors');
+            const doc = await docRef.get();
+            if (doc.exists) {
+                const count = (doc.data().count || 0) + 1;
+                await docRef.update({ count });
+                document.getElementById('visitorCount').textContent = count.toLocaleString();
+            } else {
+                await docRef.set({ count: 1 });
+                document.getElementById('visitorCount').textContent = '1';
+            }
+        }
+
+        // ============================================
+        // عرض النتائج
+        // ============================================
+        function displayServices(services) {
+            const list = document.getElementById('resultsList');
+            const count = document.getElementById('resultsCount');
+            const t = translations[currentLang];
+            list.innerHTML = '';
+            if (!services || services.length === 0) {
+                count.textContent = t.noResults;
+                list.innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px;">${t.noResults}</p>`;
+                return;
+            }
+            const w = services.length === 1 ? t.service : t.services;
+            count.textContent = `${t.found} ${services.length} ${w}`;
+
+            const sorted = [...services].sort((a, b) => (b.premium ? 1 : 0) - (a.premium ? 1 : 0));
+
+            sorted.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'service-card' + (p.premium ? ' premium' : '');
+                const premiumBadge = p.premium ? `<span class="premium-badge">${t.premiumBadge}</span>` : '';
+                const country = countriesData.find(c => c.code === p.country);
+                const cName = country ? (currentLang === 'ar' ? country.nameAr : country.name) : p.country;
+                const avatar = p.photo ? `<img src="${p.photo}">` : p.name.charAt(0);
+                const verified = p.verified ? `<span class="verified-badge">${t.verified}</span>` : '';
+                let profs = `<span class="prof-tag">${p.profession1}</span>`;
+                if (p.profession2) profs += `<span class="prof-tag">${p.profession2}</span>`;
+                const avgRating = (p.rating / (p.ratingCount || 1)).toFixed(1);
+                const rating = `<div class="rating-row"><span class="stars">⭐ ${avgRating}</span><span class="review-count">(${p.ratingCount || 0} ${t.reviews})</span></div>`;
+                let phones = '';
+                if (p.phone1) phones += `<span class="phone-tag">📞 ${p.phone1}</span>`;
+                if (p.phone2) phones += `<span class="phone-tag">📞 ${p.phone2}</span>`;
+                let btns = '';
+                if (p.whatsapp) btns += `<a href="https://wa.me/${p.whatsapp.replace(/\+/g,'')}" target="_blank" class="contact-btn whatsapp" onclick="trackClick('${p.id}')">${t.contactWhatsApp}</a>`;
+                if (p.email) btns += `<a href="mailto:${p.email}" class="contact-btn email" onclick="trackClick('${p.id}')">${t.contactEmail}</a>`;
+                btns += `<button class="contact-btn rate" onclick="openRateModal('${p.id}')">${t.rateBtn}</button>`;
+                btns += `<button class="contact-btn report" onclick="openReportModal('${p.id}')">${t.reportBtn}</button>`;
+                card.innerHTML = `${verified}${premiumBadge}<div class="card-header"><div class="avatar">${avatar}</div><div><div class="name">${p.name}</div><div class="professions">${profs}</div></div></div>${rating}<div class="details"><span>📍 ${p.city}, ${cName}</span>${p.price?`<span>💰 ${p.price}</span>`:''}</div>${p.workHours?`<div class="working-hours">🕐 ${p.workHours}</div>`:''}${p.desc?`<div style="color:var(--muted);font-size:0.7rem;margin:3px 0;">📝 ${p.desc}</div>`:''}${phones?`<div class="phones-row">${phones}</div>`:''}<div class="contact-btns">${btns}</div>`;
+                card.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+                    map.flyTo([p.lat, p.lng], 10, { duration: 1.5 });
+                    markersLayer.eachLayer(m => { if (m._pid === p.id) m.openPopup(); });
+                });
+                list.appendChild(card);
+            });
+        }
+
+        function displayMarkers(services) {
+            markersLayer.clearLayers();
+            const t = translations[currentLang];
+            services.forEach(p => {
+                const country = countriesData.find(c => c.code === p.country);
+                const cName = country ? (currentLang === 'ar' ? country.nameAr : country.name) : p.country;
+                const marker = L.marker([p.lat, p.lng])
+                    .bindPopup(`<div style="color:white;padding:5px;min-width:160px;"><h4 style="color:#e94560;margin:0 0 4px;">${p.name}</h4><p style="margin:1px 0;"><b>${p.profession1}</b>${p.profession2?' / '+p.profession2:''}</p><p style="margin:1px 0;">📍 ${p.city}, ${cName}</p>${p.whatsapp?`<a href="https://wa.me/${p.whatsapp.replace(/\+/g,'')}" target="_blank" style="color:#25D366;">${t.contactWhatsApp}</a>`:''}</div>`, { className: 'custom-popup', maxWidth: 250 });
+                marker._pid = p.id;
+                markersLayer.addLayer(marker);
+            });
+        }
+
+        async function trackClick(id) {
+            const p = serviceProviders.find(x => x.id === id);
+            if (p) {
+                p.clicks = (p.clicks || 0) + 1;
+                await db.collection('providers').doc(id).update({ clicks: p.clicks });
+            }
+        }
+
+        function applyFilters() {
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            const country = countryFilter.value;
+            const city = cityFilter.value;
+            let filtered = [...serviceProviders];
+            if (q) filtered = filtered.filter(p => (p.profession1&&p.profession1.toLowerCase().includes(q)) || (p.profession2&&p.profession2.toLowerCase().includes(q)) || p.name.toLowerCase().includes(q) || (p.desc&&p.desc.toLowerCase().includes(q)) || p.city.toLowerCase().includes(q));
+            if (country) filtered = filtered.filter(p => p.country === country);
+            if (city) filtered = filtered.filter(p => p.city.toLowerCase() === city.toLowerCase());
+            displayServices(filtered);
+            displayMarkers(filtered);
+        }
+
+        // ============================================
+        // Near Me
+        // ============================================
+        document.getElementById('nearMeBtn').addEventListener('click', () => {
+            const btn = document.getElementById('nearMeBtn');
+            const t = translations[currentLang];
+            if (!navigator.geolocation) { alert(t.geolocationError); return; }
+            btn.textContent = t.locating; btn.style.opacity = '0.7';
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude, longitude } = pos.coords;
+                if (userMarker) map.removeLayer(userMarker);
+                if (userCircle) map.removeLayer(userCircle);
+                userMarker = L.marker([latitude, longitude], { icon: L.divIcon({ className: '', html: '<div style="background:#e94560;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 20px rgba(233,69,96,0.8);"></div>', iconSize: [18,18], iconAnchor: [9,9] }) }).addTo(map).bindPopup(`<b>${t.youAreHere}</b>`);
+                userCircle = L.circle([latitude, longitude], { radius: 50000, color: '#e94560', fillColor: '#e94560', fillOpacity: 0.1, weight: 1 }).addTo(map);
+                map.flyTo([latitude, longitude], 8, { duration: 1.5 });
+                const nearby = serviceProviders.filter(p => {
+                    const R = 6371, dLat = (p.lat-latitude)*Math.PI/180, dLon = (p.lng-longitude)*Math.PI/180;
+                    const a = Math.sin(dLat/2)**2 + Math.cos(latitude*Math.PI/180)*Math.cos(p.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+                    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) <= 50;
+                });
+                displayServices(nearby);
+                displayMarkers(nearby);
+                const w = nearby.length === 1 ? t.service : t.services;
+                document.getElementById('resultsCount').textContent = `${t.found} ${nearby.length} ${w} ${t.nearYou} (50 ${t.km})`;
+                countryFilter.value = ''; cityFilter.value = ''; document.getElementById('searchInput').value = '';
+                populateCityFilter('');
+                btn.textContent = t.nearMe; btn.style.opacity = '1';
+            }, () => { alert(t.locateError); btn.textContent = t.nearMe; btn.style.opacity = '1'; }, { enableHighAccuracy: true, timeout: 10000 });
+        });
+
+                // ============================================
+        // نافذة التسجيل
+        // ============================================
+        let googleVerified = false;
+        let googleUserData = null;
+        const registerModal = document.getElementById('registerModal');
+        document.getElementById('registerBtn').addEventListener('click', () => { registerModal.classList.add('show'); document.body.style.overflow = 'hidden'; });
+        document.getElementById('closeRegisterModal').addEventListener('click', () => { registerModal.classList.remove('show'); document.body.style.overflow = ''; });
+        registerModal.addEventListener('click', e => { if (e.target === registerModal) { registerModal.classList.remove('show'); document.body.style.overflow = ''; } });
+
+        const provider = new firebase.auth.GoogleAuthProvider();
+        
+        document.getElementById('googleSignInBtnModal').addEventListener('click', () => {
+            firebase.auth().signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    googleVerified = true;
+                    googleUserData = {
+                        name: user.displayName || 'مستخدم Google',
+                        email: user.email || 'user@gmail.com',
+                        photo: user.photoURL || ''
+                    };
+                    updateGoogleUI();
+                })
+                .catch((error) => {
+                    console.error('Google Sign-In Error:', error);
+                    alert('❌ فشل تسجيل الدخول بحساب Google. حاول مرة أخرى.');
+                });
+        });
+
+        function updateGoogleUI() {
+            if (googleVerified && googleUserData) {
+                document.getElementById('googleAuthSection').classList.add('verified');
+                document.getElementById('googleUserInfo').style.display = 'block';
+                document.getElementById('googleUserName').textContent = '👤 ' + googleUserData.name;
+                document.getElementById('googleUserEmail').textContent = '📧 ' + googleUserData.email;
+                document.getElementById('googleAuthText').textContent = '✅ تم التحقق من هويتك عبر Google';
+                document.getElementById('regName').value = googleUserData.name;
+                document.getElementById('regEmail').value = googleUserData.email;
+            }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const t = translations[currentLang];
+            if (!googleVerified) { alert(t.googleRequired); return; }
+            const cc = document.getElementById('regCountry').value;
+            const country = countriesData.find(c => c.code === cc);
+            const newProvider = {
+                name: document.getElementById('regName').value,
+                profession1: document.getElementById('regProfession1').value,
+                profession2: document.getElementById('regProfession2').value || '',
+                phone1: document.getElementById('regPhone1').value,
+                phone2: document.getElementById('regPhone2').value || '',
+                whatsapp: document.getElementById('regWhatsApp').value || document.getElementById('regPhone1').value,
+                email: document.getElementById('regEmail').value || '',
+                country: cc, city: document.getElementById('regCity').value,
+                price: document.getElementById('regPrice').value || '',
+                workHours: document.getElementById('regWorkHours').value || '',
+                desc: document.getElementById('regDesc').value || '',
+                lat: country ? country.lat + (Math.random()-0.5)*2 : 25,
+                lng: country ? country.lng + (Math.random()-0.5)*2 : 45,
+                rating: 5.0, ratingCount: 1, reviews: 0, verified: true,
+                premium: false, views: 0, clicks: 0, photo: '', gallery: []
+            };
+            await db.collection('providers').add(newProvider);
+            alert(t.successMsg);
+            this.reset();
+            googleVerified = false; googleUserData = null;
+            document.getElementById('googleAuthSection').classList.remove('verified');
+            document.getElementById('googleUserInfo').style.display = 'none';
+            document.getElementById('googleAuthText').textContent = t.googleAuthText;
+            registerModal.classList.remove('show'); document.body.style.overflow = '';
+            await loadProvidersFromFirebase();
+        });
+
+        // ============================================
+        // زر Contact Us
+        // ============================================
+        document.getElementById('contactBtn').addEventListener('click', () => {
+            window.location.href = 'mailto:eyadrmh@gmail.com?subject=استفسار من تطبيق I need&body=مرحباً، لدي استفسار حول التطبيق...';
+        });
+
+        // ============================================
+        // نافذة Privacy Policy
+        // ============================================
+        const privacyModal = document.getElementById('privacyModal');
+        document.getElementById('privacyBtn').addEventListener('click', () => { privacyModal.classList.add('show'); });
+        document.getElementById('closePrivacyModal').addEventListener('click', () => { privacyModal.classList.remove('show'); });
+        privacyModal.addEventListener('click', e => { if (e.target === privacyModal) privacyModal.classList.remove('show'); });
+
+        // ============================================
+        // 🔐 نظام الأدمن
+        // ============================================
+        const adminLoginModal = document.getElementById('adminLoginModal');
+        const adminPanelModal = document.getElementById('adminPanelModal');
+        document.getElementById('adminBtn').addEventListener('click', () => { document.getElementById('adminPassword').value = ''; adminLoginModal.classList.add('show'); });
+        document.getElementById('closeAdminLogin').addEventListener('click', () => { adminLoginModal.classList.remove('show'); });
+        adminLoginModal.addEventListener('click', e => { if (e.target === adminLoginModal) adminLoginModal.classList.remove('show'); });
+        document.getElementById('adminLoginBtn').addEventListener('click', () => {
+            if (document.getElementById('adminPassword').value === adminPassword) {
+                adminLoginModal.classList.remove('show');
+                openAdminPanel();
+            } else { alert(translations[currentLang].wrongPassword); }
+        });
+        document.getElementById('adminPassword').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('adminLoginBtn').click(); });
+
+        function openAdminPanel() { adminPanelModal.classList.add('show'); updateAdminStats(); populateAdminTable(); }
+        document.getElementById('closeAdminPanel').addEventListener('click', () => { adminPanelModal.classList.remove('show'); });
+        adminPanelModal.addEventListener('click', e => { if (e.target === adminPanelModal) adminPanelModal.classList.remove('show'); });
+
+        function updateAdminStats() {
+            document.getElementById('statProviders').textContent = serviceProviders.length;
+            document.getElementById('statVerified').textContent = serviceProviders.filter(p => p.verified).length;
+            document.getElementById('statPremium').textContent = serviceProviders.filter(p => p.premium).length;
+            db.collection('stats').doc('visitors').get().then(doc => {
+                document.getElementById('statVisitors').textContent = doc.exists ? doc.data().count : 0;
+            });
+            document.getElementById('statCountries').textContent = new Set(serviceProviders.map(p => p.country)).size;
+        }
+
+        function populateAdminTable() {
+            const tbody = document.getElementById('adminTableBody');
+            const t = translations[currentLang];
+            tbody.innerHTML = '';
+            serviceProviders.forEach((p, index) => {
+                const verifiedBadge = p.verified ? '<span class="badge verified">✅ موثوق</span>' : '<span class="badge unverified">❌ غير موثوق</span>';
+                const premiumBadge = p.premium ? '<span class="badge premium">💎</span>' : '<span class="badge unverified">-</span>';
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${index+1}</td><td>${p.name}</td><td>${p.profession1}${p.profession2?' / '+p.profession2:''}</td><td>${p.city}</td><td>${p.views||0}</td><td>${p.clicks||0}</td><td>⭐ ${(p.rating/(p.ratingCount||1)).toFixed(1)} (${p.ratingCount||0})</td><td>${verifiedBadge}</td><td>${premiumBadge}</td><td><button class="edit-btn" onclick="editProvider('${p.id}')">✏️</button> <button class="verify-btn" onclick="toggleVerify('${p.id}')">${p.verified?'❌':'✅'}</button> <button class="premium-btn" onclick="togglePremium('${p.id}')">💎</button> <button class="delete-btn" onclick="deleteProvider('${p.id}')">🗑️</button></td>`;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function deleteProvider(id) {
+            if (confirm(translations[currentLang].confirmDelete)) {
+                await db.collection('providers').doc(id).delete();
+                await loadProvidersFromFirebase();
+                updateAdminStats(); populateAdminTable();
+            }
+        }
+
+        async function toggleVerify(id) {
+            const p = serviceProviders.find(x => x.id === id);
+            if (p) {
+                await db.collection('providers').doc(id).update({ verified: !p.verified });
+                await loadProvidersFromFirebase();
+                updateAdminStats(); populateAdminTable();
+            }
+        }
+
+        async function togglePremium(id) {
+            const p = serviceProviders.find(x => x.id === id);
+            if (p) {
+                await db.collection('providers').doc(id).update({ premium: !p.premium });
+                await loadProvidersFromFirebase();
+                updateAdminStats(); populateAdminTable();
+            }
+        }
+
+        window.editProvider = function(id) {
+            const p = serviceProviders.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('editProviderId').value = p.id;
+            document.getElementById('editName').value = p.name;
+            document.getElementById('editProfession1').value = p.profession1;
+            document.getElementById('editProfession2').value = p.profession2 || '';
+            document.getElementById('editPhone1').value = p.phone1 || '';
+            document.getElementById('editPhone2').value = p.phone2 || '';
+            document.getElementById('editWhatsApp').value = p.whatsapp || '';
+            document.getElementById('editEmail').value = p.email || '';
+            document.getElementById('editCountry').value = p.country;
+            document.getElementById('editCity').value = p.city;
+            document.getElementById('editPrice').value = p.price || '';
+            document.getElementById('editWorkHours').value = p.workHours || '';
+            document.getElementById('editDesc').value = p.desc || '';
+            document.getElementById('editProviderModal').classList.add('show');
+        };
+
+        document.getElementById('closeEditModal').addEventListener('click', () => { document.getElementById('editProviderModal').classList.remove('show'); });
+        document.getElementById('editProviderModal').addEventListener('click', e => { if (e.target === document.getElementById('editProviderModal')) document.getElementById('editProviderModal').classList.remove('show'); });
+
+        document.getElementById('editProviderForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editProviderId').value;
+            if (!id) return;
+            const cc = document.getElementById('editCountry').value;
+            const country = countriesData.find(c => c.code === cc);
+            const updatedData = {
+                name: document.getElementById('editName').value,
+                profession1: document.getElementById('editProfession1').value,
+                profession2: document.getElementById('editProfession2').value,
+                phone1: document.getElementById('editPhone1').value,
+                phone2: document.getElementById('editPhone2').value,
+                whatsapp: document.getElementById('editWhatsApp').value,
+                email: document.getElementById('editEmail').value,
+                country: cc, city: document.getElementById('editCity').value,
+                price: document.getElementById('editPrice').value,
+                workHours: document.getElementById('editWorkHours').value,
+                desc: document.getElementById('editDesc').value,
+            };
+            if (country) { updatedData.lat = country.lat + (Math.random()-0.5)*2; updatedData.lng = country.lng + (Math.random()-0.5)*2; }
+            await db.collection('providers').doc(id).update(updatedData);
+            document.getElementById('editProviderModal').classList.remove('show');
+            await loadProvidersFromFirebase();
+            updateAdminStats(); populateAdminTable();
+            alert('✅ تم حفظ التعديلات بنجاح!');
+        });
+
+        document.getElementById('exportCSVBtn').addEventListener('click', () => {
+            let csv = 'الاسم,المهنة 1,المهنة 2,الدولة,المدينة,هاتف 1,هاتف 2,واتساب,إيميل,موثق,ممول,مشاهدات,نقرات\n';
+            serviceProviders.forEach(p => {
+                const country = countriesData.find(c => c.code === p.country);
+                const cName = country ? (currentLang === 'ar' ? country.nameAr : country.name) : p.country;
+                csv += `"${p.name}","${p.profession1}","${p.profession2||''}","${cName}","${p.city}","${p.phone1||''}","${p.phone2||''}","${p.whatsapp||''}","${p.email||''}","${p.verified?'نعم':'لا'}","${p.premium?'نعم':'لا'}","${p.views||0}","${p.clicks||0}"\n`;
+            });
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ineed_providers.csv'; a.click();
+        });
+
+        document.getElementById('changePasswordBtn').addEventListener('click', async () => {
+            const newPass = prompt('🔑 أدخل كلمة المرور الجديدة:');
+            if (newPass && newPass.length >= 4) {
+                adminPassword = newPass;
+                await db.collection('settings').doc('admin').set({ password: newPass });
+                alert(translations[currentLang].passwordChanged);
+            } else if (newPass) { alert('❌ كلمة المرور يجب أن تكون 4 أحرف على الأقل.'); }
+        });
+
+        document.getElementById('clearAllBtn').addEventListener('click', async () => {
+            if (confirm(translations[currentLang].confirmClearAll)) {
+                const snapshot = await db.collection('providers').get();
+                const batch = db.batch();
+                snapshot.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                await loadProvidersFromFirebase();
+                updateAdminStats(); populateAdminTable();
+            }
+        });
+
+        window.deleteProvider = deleteProvider;
+        window.toggleVerify = toggleVerify;
+        window.togglePremium = togglePremium;
+
+        // ============================================
+        // ⭐ نظام التقييم
+        // ============================================
+        let selectedRating = 0;
+        const rateModal = document.getElementById('rateModal');
+        const reportModal = document.getElementById('reportModal');
+
+        window.openRateModal = function(id) {
+            const p = serviceProviders.find(x => x.id === id);
+            if (!p) return;
+            selectedRating = 0;
+            document.getElementById('rateProviderId').value = id;
+            document.getElementById('rateProviderName').textContent = `👤 ${p.name} - ${p.profession1}`;
+            document.getElementById('rateComment').value = '';
+            document.querySelectorAll('#starRating span').forEach(s => s.style.color = 'var(--muted)');
+            rateModal.classList.add('show');
+        };
+
+        document.querySelectorAll('#starRating span').forEach(star => {
+            star.addEventListener('click', function() {
+                selectedRating = parseInt(this.dataset.value);
+                document.querySelectorAll('#starRating span').forEach((s, index) => {
+                    s.style.color = index < selectedRating ? 'var(--gold)' : 'var(--muted)';
+                });
+            });
+        });
+
+        document.getElementById('closeRateModal').addEventListener('click', () => { rateModal.classList.remove('show'); });
+        rateModal.addEventListener('click', e => { if (e.target === rateModal) rateModal.classList.remove('show'); });
+
+        document.getElementById('submitRateBtn').addEventListener('click', async () => {
+            const id = document.getElementById('rateProviderId').value;
+            const p = serviceProviders.find(x => x.id === id);
+            if (!p) return;
+            if (selectedRating === 0) { alert('⚠️ يرجى اختيار عدد النجوم'); return; }
+            const newRating = (p.rating || 0) + selectedRating;
+            const newCount = (p.ratingCount || 0) + 1;
+            await db.collection('providers').doc(id).update({ rating: newRating, ratingCount: newCount });
+            rateModal.classList.remove('show');
+            alert(translations[currentLang].rateSuccess);
+            await loadProvidersFromFirebase();
+        });
+
+        // ============================================
+        // 🚩 نظام الإبلاغ
+        // ============================================
+        window.openReportModal = function(id) {
+            const p = serviceProviders.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('reportProviderId').value = id;
+            document.getElementById('reportProviderName').textContent = `👤 ${p.name} - ${p.profession1}`;
+            document.getElementById('reportDetails').value = '';
+            reportModal.classList.add('show');
+        };
+
+        document.getElementById('closeReportModal').addEventListener('click', () => { reportModal.classList.remove('show'); });
+        reportModal.addEventListener('click', e => { if (e.target === reportModal) reportModal.classList.remove('show'); });
+
+        document.getElementById('submitReportBtn').addEventListener('click', () => {
+            const id = document.getElementById('reportProviderId').value;
+            const p = serviceProviders.find(x => x.id === id);
+            if (!p) return;
+            const reason = document.getElementById('reportReason').value;
+            const details = document.getElementById('reportDetails').value.trim();
+            const subject = `🚩 بلاغ عن مزود خدمة: ${p.name}`;
+            const body = `اسم المزود: ${p.name}%0D%0Aالمهنة: ${p.profession1}%0D%0Aالمدينة: ${p.city}%0D%0A%0D%0Aسبب البلاغ: ${reason}%0D%0A%0D%0Aتفاصيل: ${details || 'لا يوجد'}`;
+            window.location.href = `mailto:eyadrmh@gmail.com?subject=${encodeURIComponent(subject)}&body=${body}`;
+            reportModal.classList.remove('show');
+            alert(translations[currentLang].reportSuccess);
+        });
+
+        // ============================================
+        // تغيير اللغة (كل العناصر)
+        // ============================================
+        function changeLanguage(lang) {
+            currentLang = lang;
+            const t = translations[lang];
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+            document.documentElement.dir = t.dir;
+            document.documentElement.lang = lang;
+            
+            document.getElementById('logoText').innerHTML = t.logo + '<span>...</span>';
+            document.getElementById('tagline').textContent = t.tagline;
+            document.getElementById('searchInput').placeholder = t.searchPlaceholder;
+            document.getElementById('lblCountry').textContent = t.lblCountry;
+            document.getElementById('lblCity').textContent = t.lblCity;
+            document.getElementById('nearMeBtn').innerHTML = t.nearMe;
+            document.getElementById('searchBtn').textContent = t.search;
+            document.getElementById('registerTitle').textContent = t.registerTitle;
+            document.getElementById('registerBtn').textContent = t.registerBtn;
+            document.getElementById('visitorLabel').textContent = t.visitorLabel;
+            document.getElementById('modalTitle').textContent = t.modalTitle;
+            document.getElementById('googleAuthText').textContent = t.googleAuthText;
+            document.getElementById('dividerText').textContent = t.dividerText;
+            document.getElementById('disclaimerText').textContent = t.disclaimerText;
+            ['lblName','lblEmail','lblProfession1','lblProfession2','lblPhone1','lblPhone2','lblWhatsApp','lblCountryReg','lblCityReg','lblPrice','lblWorkHours','lblDesc','submitBtn'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.textContent = t[id];
+            });
+            document.getElementById('rateModalTitle').textContent = t.rateModalTitle;
+            document.getElementById('rateCommentLabel').textContent = t.rateCommentLabel;
+            document.getElementById('submitRateBtn').textContent = t.submitRateBtn;
+            document.getElementById('reportModalTitle').textContent = t.reportModalTitle;
+            document.getElementById('reportReasonLabel').textContent = t.reportReasonLabel;
+            document.getElementById('reportDetailsLabel').textContent = t.reportDetailsLabel;
+            document.getElementById('submitReportBtn').textContent = t.submitReportBtn;
+            document.getElementById('adminLoginTitle').textContent = t.adminLoginTitle;
+            document.getElementById('adminPasswordLabel').textContent = t.adminPasswordLabel;
+            document.getElementById('adminLoginBtn').textContent = t.adminLoginBtn;
+            document.getElementById('adminDefaultPass').textContent = t.adminDefaultPass;
+            document.getElementById('adminPanelTitle').textContent = t.adminPanelTitle;
+            document.getElementById('statProvidersLabel').textContent = t.statProvidersLabel;
+            document.getElementById('statVerifiedLabel').textContent = t.statVerifiedLabel;
+            document.getElementById('statPremiumLabel').textContent = t.statPremiumLabel;
+            document.getElementById('statVisitorsLabel').textContent = t.statVisitorsLabel;
+            document.getElementById('statCountriesLabel').textContent = t.statCountriesLabel;
+            document.getElementById('exportCSVBtn').textContent = t.exportCSVBtn;
+            document.getElementById('changePasswordBtn').textContent = t.changePasswordBtn;
+            document.getElementById('clearAllBtn').textContent = t.clearAllBtn;
+            document.getElementById('thName').textContent = t.thName;
+            document.getElementById('thProfession').textContent = t.thProfession;
+            document.getElementById('thCity').textContent = t.thCity;
+            document.getElementById('thViews').textContent = t.thViews;
+            document.getElementById('thClicks').textContent = t.thClicks;
+            document.getElementById('thRating').textContent = t.thRating;
+            document.getElementById('thVerified').textContent = t.thVerified;
+            document.getElementById('thPremium').textContent = t.thPremium;
+            document.getElementById('thActions').textContent = t.thActions;
+            document.getElementById('editModalTitle').textContent = t.editModalTitle;
+            document.getElementById('editNameLabel').textContent = t.editNameLabel;
+            document.getElementById('editProfession1Label').textContent = t.editProfession1Label;
+            document.getElementById('editProfession2Label').textContent = t.editProfession2Label;
+            document.getElementById('editPhone1Label').textContent = t.editPhone1Label;
+            document.getElementById('editPhone2Label').textContent = t.editPhone2Label;
+            document.getElementById('editWhatsAppLabel').textContent = t.editWhatsAppLabel;
+            document.getElementById('editEmailLabel').textContent = t.editEmailLabel;
+            document.getElementById('editCountryLabel').textContent = t.editCountryLabel;
+            document.getElementById('editCityLabel').textContent = t.editCityLabel;
+            document.getElementById('editPriceLabel').textContent = t.editPriceLabel;
+            document.getElementById('editWorkHoursLabel').textContent = t.editWorkHoursLabel;
+            document.getElementById('editDescLabel').textContent = t.editDescLabel;
+            document.getElementById('editSubmitBtn').textContent = t.editSubmitBtn;
+            document.getElementById('privacyTitle').textContent = t.privacyTitle;
+            
+            populateCountryFilter();
+            populateCityFilter(countryFilter.value);
+            applyFilters();
+        }
+        document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => changeLanguage(b.dataset.lang)));
+        document.getElementById('searchBtn').addEventListener('click', applyFilters);
+        document.getElementById('searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilters(); });
+
+        // ============================================
+        // بدء التشغيل
+        // ============================================
+        async function init() {
+            populateCountryFilter();
+            await loadProvidersFromFirebase();
+            map.setView([25.0, 45.0], 4);
+            console.log('✅ I need... v5.0 Firebase Ready!');
+            console.log('💾 Providers:', serviceProviders.length);
+            console.log('🔐 Admin Password:', adminPassword);
+        }
+        init();
+    </script>
+</body>
+</html>
