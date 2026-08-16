@@ -1488,12 +1488,56 @@ markersLayer.addLayer(marker);
             });
         }
         
-        function applyFilters() {
-            const q = document.getElementById('searchInput').value.toLowerCase().trim();
-            const country = countryFilter.value;
-            const city = cityFilter.value;
-            let filtered = [...serviceProviders];
-            if (q) filtered = filtered.filter(p => (p.profession1&&p.profession1.toLowerCase().includes(q)) || (p.profession2&&p.profession2.toLowerCase().includes(q)) || p.name.toLowerCase().includes(q) || (p.desc&&p.desc.toLowerCase().includes(q)) || p.city.toLowerCase().includes(q));
+        // مرادفات المهن
+const professionSynonyms = {
+    'معلم': ['معلم', 'مدرس', 'أستاذ', 'محاضر', 'مدرب'],
+    'مدرس': ['معلم', 'مدرس', 'أستاذ', 'محاضر', 'مدرب'],
+    'أستاذ': ['معلم', 'مدرس', 'أستاذ', 'محاضر', 'مدرب'],
+    'محاضر': ['معلم', 'مدرس', 'أستاذ', 'محاضر', 'مدرب'],
+    'دكتور': ['دكتور', 'طبيب', 'دكتورة', 'طبيبة'],
+    'طبيب': ['دكتور', 'طبيب', 'دكتورة', 'طبيبة'],
+    'دكتورة': ['دكتور', 'طبيب', 'دكتورة', 'طبيبة'],
+    'طبيبة': ['دكتور', 'طبيب', 'دكتورة', 'طبيبة'],
+    'سباك': ['سباك', 'سمكري', 'فني صحي'],
+    'كهربائي': ['كهربائي', 'فني كهرباء'],
+    'نجار': ['نجار', 'فني نجارة'],
+    'مبرمج': ['مبرمج', 'مطور', 'مطور برمجيات', 'مطور مواقع', 'مطور تطبيقات'],
+    'مطور': ['مبرمج', 'مطور', 'مطور برمجيات', 'مطور مواقع', 'مطور تطبيقات'],
+    'مصمم': ['مصمم', 'مصمم جرافيك', 'مصمم مواقع', 'مصمم داخلي'],
+    'مهندس': ['مهندس', 'مهندس معماري', 'مهندس مدني', 'مهندس كهرباء', 'مهندس ميكانيك', 'مهندس برمجيات', 'مهندس شبكات'],
+    'حلاق': ['حلاق', 'مصفف شعر', 'كوافير'],
+    'مصفف شعر': ['حلاق', 'مصفف شعر', 'كوافير'],
+    'طباخ': ['طباخ', 'شيف', 'طاهي'],
+    'خياط': ['خياط', 'ترزي'],
+    'منظف': ['منظف', 'عامل نظافة'],
+    'سائق': ['سائق', 'سواق'],
+    'محامي': ['محامي', 'محامية', 'مستشار قانوني'],
+    'محاسب': ['محاسب', 'مدقق حسابات', 'محاسب قانوني'],
+    'مترجم': ['مترجم', 'مترجمة'],
+    'مصور': ['مصور', 'مصورة'],
+    'ممرض': ['ممرض', 'ممرضة'],
+    'ممرضة': ['ممرض', 'ممرضة'],
+    'صيدلي': ['صيدلي', 'صيدلاني'],
+    'معالج': ['معالج', 'أخصائي علاج طبيعي', 'أخصائي نفسي']
+};
+
+function applyFilters() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const country = countryFilter.value;
+    const city = cityFilter.value;
+    let filtered = [...serviceProviders];
+    if (q) {
+        const synonyms = professionSynonyms[q] || [q];
+        filtered = filtered.filter(p => {
+            const prof1 = (p.profession1 || '').toLowerCase();
+            const prof2 = (p.profession2 || '').toLowerCase();
+            const name = (p.name || '').toLowerCase();
+            const desc = (p.desc || '').toLowerCase();
+            const cityName = (p.city || '').toLowerCase();
+            const matchSynonym = synonyms.some(s => prof1.includes(s) || prof2.includes(s));
+            return matchSynonym || name.includes(q) || desc.includes(q) || cityName.includes(q);
+        });
+    }
             if (country) filtered = filtered.filter(p => p.country === country);
             if (city) filtered = filtered.filter(p => p.city.toLowerCase() === city.toLowerCase());
             displayServices(filtered);
