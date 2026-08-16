@@ -54,14 +54,106 @@
             overflow-y: auto; border-left: 2px solid var(--border); z-index: 10;
         }
 
-        .lang-bar { display: flex; gap: 6px; justify-content: center; padding: 6px 0; border-bottom: 2px solid var(--border); flex-wrap: wrap; }
-        .lang-btn {
-            padding: 10px 14px; border-radius: 20px; border: 2px solid var(--border);
-            background: var(--card); color: var(--text); cursor: pointer; font-size: 0.85rem;
-            font-weight: 700; transition: all 0.3s; white-space: nowrap;
-        }
-        .lang-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
-        .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+        .lang-bar { 
+    display: flex; 
+    justify-content: center; 
+    padding: 6px 0; 
+    border-bottom: 2px solid var(--border); 
+    position: relative;
+    z-index: 999;
+}
+.lang-select-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 200px;
+}
+.lang-select-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 25px;
+    border: 2px solid var(--blue);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition: all 0.3s;
+    box-shadow: 0 2px 10px rgba(66,133,244,0.2);
+}
+.lang-select-btn:hover {
+    border-color: var(--blue);
+    box-shadow: 0 4px 15px rgba(66,133,244,0.3);
+}
+.lang-select-btn .arrow {
+    font-size: 0.7rem;
+    transition: transform 0.3s;
+    color: var(--blue);
+}
+.lang-select-btn .arrow.open {
+    transform: rotate(180deg);
+}
+.lang-dropdown {
+    position: absolute;
+    top: calc(100% + 5px);
+    right: 0;
+    left: 0;
+    background: var(--card);
+    border: 2px solid var(--blue);
+    border-radius: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+.lang-dropdown.show {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.lang-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    border-bottom: 1px solid var(--border);
+}
+.lang-option:last-child {
+    border-bottom: none;
+}
+.lang-option:hover {
+    background: rgba(66,133,244,0.1);
+    color: var(--blue);
+}
+.lang-option.active {
+    background: var(--blue);
+    color: white;
+}
+.lang-option .lang-flag {
+    font-size: 1.2rem;
+}
+.lang-option .lang-name {
+    flex: 1;
+}
+.lang-option .lang-check {
+    color: var(--blue);
+    font-weight: 800;
+}
+.lang-option.active .lang-check {
+    color: white;
+}
 
         .logo {
             font-size: 2.2rem; font-weight: 800; color: var(--blue); text-align: center;
@@ -332,14 +424,50 @@
         <!-- العمود الأيسر -->
         <div class="left-panel">
             <div class="lang-bar" id="langBar">
-                <button class="lang-btn active" data-lang="ar">🇸🇦 عربي</button>
-                <button class="lang-btn" data-lang="en">🇬🇧 EN</button>
-                <button class="lang-btn" data-lang="fr">🇫🇷 FR</button>
-                <button class="lang-btn" data-lang="de">🇩🇪 DE</button>
-                <button class="lang-btn" data-lang="es">🇪🇸 ES</button>
-                <button class="lang-btn" data-lang="tr">🇹🇷 TR</button>
-                <button class="lang-btn" data-lang="ur">🇵🇰 اردو</button>
+    <div class="lang-select-wrapper">
+        <button class="lang-select-btn" id="langSelectBtn" type="button">
+            <span id="currentLangDisplay">🇸🇦 العربية</span>
+            <span class="arrow" id="langArrow">▼</span>
+        </button>
+        <div class="lang-dropdown" id="langDropdown">
+            <div class="lang-option active" data-lang="ar">
+                <span class="lang-flag">🇸🇦</span>
+                <span class="lang-name">العربية</span>
+                <span class="lang-check">✓</span>
             </div>
+            <div class="lang-option" data-lang="en">
+                <span class="lang-flag">🇬🇧</span>
+                <span class="lang-name">English</span>
+                <span class="lang-check">✓</span>
+            </div>
+            <div class="lang-option" data-lang="fr">
+                <span class="lang-flag">🇫🇷</span>
+                <span class="lang-name">Français</span>
+                <span class="lang-check">✓</span>
+            </div>
+            <div class="lang-option" data-lang="de">
+                <span class="lang-flag">🇩🇪</span>
+                <span class="lang-name">Deutsch</span>
+                <span class="lang-check">✓</span>
+            </div>
+            <div class="lang-option" data-lang="es">
+                <span class="lang-flag">🇪🇸</span>
+                <span class="lang-name">Español</span>
+                <span class="lang-check">✓</span>
+            </div>
+            <div class="lang-option" data-lang="tr">
+                <span class="lang-flag">🇹🇷</span>
+                <span class="lang-name">Türkçe</span>
+                <span class="lang-check">✓</span>
+            </div>
+            <div class="lang-option" data-lang="ur">
+                <span class="lang-flag">🇵🇰</span>
+                <span class="lang-name">اردو</span>
+                <span class="lang-check">✓</span>
+            </div>
+        </div>
+    </div>
+</div>
 
             <div class="logo" id="logoText">أنا أحتاج إلى<span>...</span></div>
             <div class="tagline" id="tagline">أي خدمة، في أي مكان</div>
@@ -1714,79 +1842,137 @@
         // تغيير اللغة (كل العناصر)
         // ============================================
         function changeLanguage(lang) {
-            currentLang = lang;
-            const t = translations[lang];
-            document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-            document.documentElement.dir = t.dir;
-            document.documentElement.lang = lang;
-            
-            document.getElementById('logoText').innerHTML = t.logo + '<span>...</span>';
-            document.getElementById('tagline').textContent = t.tagline;
-            document.getElementById('searchInput').placeholder = t.searchPlaceholder;
-            document.getElementById('lblCountry').textContent = t.lblCountry;
-            document.getElementById('lblCity').textContent = t.lblCity;
-            document.getElementById('nearMeBtn').innerHTML = t.nearMe;
-            document.getElementById('searchBtn').textContent = t.search;
-            document.getElementById('registerTitle').textContent = t.registerTitle;
-            document.getElementById('registerBtn').textContent = t.registerBtn;
-            document.getElementById('visitorLabel').textContent = t.visitorLabel;
-            document.getElementById('modalTitle').textContent = t.modalTitle;
-            document.getElementById('googleAuthText').textContent = t.googleAuthText;
-            document.getElementById('dividerText').textContent = t.dividerText;
-            document.getElementById('disclaimerText').textContent = t.disclaimerText;
-            ['lblName','lblEmail','lblProfession1','lblProfession2','lblPhone1','lblPhone2','lblWhatsApp','lblCountryReg','lblCityReg','lblPrice','lblWorkHours','lblDesc','submitBtn'].forEach(id => {
-                const el = document.getElementById(id); if (el) el.textContent = t[id];
-            });
-            document.getElementById('rateModalTitle').textContent = t.rateModalTitle;
-            document.getElementById('rateCommentLabel').textContent = t.rateCommentLabel;
-            document.getElementById('submitRateBtn').textContent = t.submitRateBtn;
-            document.getElementById('reportModalTitle').textContent = t.reportModalTitle;
-            document.getElementById('reportReasonLabel').textContent = t.reportReasonLabel;
-            document.getElementById('reportDetailsLabel').textContent = t.reportDetailsLabel;
-            document.getElementById('submitReportBtn').textContent = t.submitReportBtn;
-            document.getElementById('adminLoginTitle').textContent = t.adminLoginTitle;
-            document.getElementById('adminPasswordLabel').textContent = t.adminPasswordLabel;
-            document.getElementById('adminLoginBtn').textContent = t.adminLoginBtn;
-            document.getElementById('adminDefaultPass').textContent = t.adminDefaultPass;
-            document.getElementById('adminPanelTitle').textContent = t.adminPanelTitle;
-            document.getElementById('statProvidersLabel').textContent = t.statProvidersLabel;
-            document.getElementById('statVerifiedLabel').textContent = t.statVerifiedLabel;
-            document.getElementById('statPremiumLabel').textContent = t.statPremiumLabel;
-            document.getElementById('statVisitorsLabel').textContent = t.statVisitorsLabel;
-            document.getElementById('statCountriesLabel').textContent = t.statCountriesLabel;
-            document.getElementById('exportCSVBtn').textContent = t.exportCSVBtn;
-            document.getElementById('changePasswordBtn').textContent = t.changePasswordBtn;
-            document.getElementById('clearAllBtn').textContent = t.clearAllBtn;
-            document.getElementById('thName').textContent = t.thName;
-            document.getElementById('thProfession').textContent = t.thProfession;
-            document.getElementById('thCity').textContent = t.thCity;
-            document.getElementById('thViews').textContent = t.thViews;
-            document.getElementById('thClicks').textContent = t.thClicks;
-            document.getElementById('thRating').textContent = t.thRating;
-            document.getElementById('thVerified').textContent = t.thVerified;
-            document.getElementById('thPremium').textContent = t.thPremium;
-            document.getElementById('thActions').textContent = t.thActions;
-            document.getElementById('editModalTitle').textContent = t.editModalTitle;
-            document.getElementById('editNameLabel').textContent = t.editNameLabel;
-            document.getElementById('editProfession1Label').textContent = t.editProfession1Label;
-            document.getElementById('editProfession2Label').textContent = t.editProfession2Label;
-            document.getElementById('editPhone1Label').textContent = t.editPhone1Label;
-            document.getElementById('editPhone2Label').textContent = t.editPhone2Label;
-            document.getElementById('editWhatsAppLabel').textContent = t.editWhatsAppLabel;
-            document.getElementById('editEmailLabel').textContent = t.editEmailLabel;
-            document.getElementById('editCountryLabel').textContent = t.editCountryLabel;
-            document.getElementById('editCityLabel').textContent = t.editCityLabel;
-            document.getElementById('editPriceLabel').textContent = t.editPriceLabel;
-            document.getElementById('editWorkHoursLabel').textContent = t.editWorkHoursLabel;
-            document.getElementById('editDescLabel').textContent = t.editDescLabel;
-            document.getElementById('editSubmitBtn').textContent = t.editSubmitBtn;
-            document.getElementById('privacyTitle').textContent = t.privacyTitle;
-            
-            populateCountryFilter();
-            populateCityFilter(countryFilter.value);
-            applyFilters();
-        }
-        document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => changeLanguage(b.dataset.lang)));
+    currentLang = lang;
+    const t = translations[lang];
+    
+    // تحديث عرض القائمة المنسدلة
+    const langNames = {
+        ar: '🇸🇦 العربية',
+        en: '🇬🇧 English',
+        fr: '🇫🇷 Français',
+        de: '🇩🇪 Deutsch',
+        es: '🇪🇸 Español',
+        tr: '🇹🇷 Türkçe',
+        ur: '🇵🇰 اردو'
+    };
+    document.getElementById('currentLangDisplay').textContent = langNames[lang] || langNames.ar;
+    document.querySelectorAll('.lang-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.lang === lang);
+    });
+    
+    document.documentElement.dir = t.dir;
+    document.documentElement.lang = lang;
+    
+    document.getElementById('logoText').innerHTML = t.logo + '<span>...</span>';
+    document.getElementById('tagline').textContent = t.tagline;
+    document.getElementById('searchInput').placeholder = t.searchPlaceholder;
+    document.getElementById('lblCountry').textContent = t.lblCountry;
+    document.getElementById('lblCity').textContent = t.lblCity;
+    document.getElementById('nearMeBtn').innerHTML = t.nearMe;
+    document.getElementById('searchBtn').textContent = t.search;
+    document.getElementById('registerTitle').textContent = t.registerTitle;
+    document.getElementById('registerBtn').textContent = t.registerBtn;
+    document.getElementById('visitorLabel').textContent = t.visitorLabel;
+    document.getElementById('modalTitle').textContent = t.modalTitle;
+    document.getElementById('googleAuthText').textContent = t.googleAuthText;
+    document.getElementById('dividerText').textContent = t.dividerText;
+    document.getElementById('disclaimerText').textContent = t.disclaimerText;
+    ['lblName','lblEmail','lblProfession1','lblProfession2','lblPhone1','lblPhone2','lblWhatsApp','lblCountryReg','lblCityReg','lblPrice','lblWorkHours','lblDesc','submitBtn'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.textContent = t[id];
+    });
+    document.getElementById('rateModalTitle').textContent = t.rateModalTitle;
+    document.getElementById('rateCommentLabel').textContent = t.rateCommentLabel;
+    document.getElementById('submitRateBtn').textContent = t.submitRateBtn;
+    document.getElementById('reportModalTitle').textContent = t.reportModalTitle;
+    document.getElementById('reportReasonLabel').textContent = t.reportReasonLabel;
+    document.getElementById('reportDetailsLabel').textContent = t.reportDetailsLabel;
+    document.getElementById('submitReportBtn').textContent = t.submitReportBtn;
+    document.getElementById('adminLoginTitle').textContent = t.adminLoginTitle;
+    document.getElementById('adminPasswordLabel').textContent = t.adminPasswordLabel;
+    document.getElementById('adminLoginBtn').textContent = t.adminLoginBtn;
+    document.getElementById('adminDefaultPass').textContent = t.adminDefaultPass;
+    document.getElementById('adminPanelTitle').textContent = t.adminPanelTitle;
+    document.getElementById('statProvidersLabel').textContent = t.statProvidersLabel;
+    document.getElementById('statVerifiedLabel').textContent = t.statVerifiedLabel;
+    document.getElementById('statPremiumLabel').textContent = t.statPremiumLabel;
+    document.getElementById('statVisitorsLabel').textContent = t.statVisitorsLabel;
+    document.getElementById('statCountriesLabel').textContent = t.statCountriesLabel;
+    document.getElementById('exportCSVBtn').textContent = t.exportCSVBtn;
+    document.getElementById('changePasswordBtn').textContent = t.changePasswordBtn;
+    document.getElementById('clearAllBtn').textContent = t.clearAllBtn;
+    document.getElementById('thName').textContent = t.thName;
+    document.getElementById('thProfession').textContent = t.thProfession;
+    document.getElementById('thCity').textContent = t.thCity;
+    document.getElementById('thViews').textContent = t.thViews;
+    document.getElementById('thClicks').textContent = t.thClicks;
+    document.getElementById('thRating').textContent = t.thRating;
+    document.getElementById('thVerified').textContent = t.thVerified;
+    document.getElementById('thPremium').textContent = t.thPremium;
+    document.getElementById('thActions').textContent = t.thActions;
+    document.getElementById('editModalTitle').textContent = t.editModalTitle;
+    document.getElementById('editNameLabel').textContent = t.editNameLabel;
+    document.getElementById('editProfession1Label').textContent = t.editProfession1Label;
+    document.getElementById('editProfession2Label').textContent = t.editProfession2Label;
+    document.getElementById('editPhone1Label').textContent = t.editPhone1Label;
+    document.getElementById('editPhone2Label').textContent = t.editPhone2Label;
+    document.getElementById('editWhatsAppLabel').textContent = t.editWhatsAppLabel;
+    document.getElementById('editEmailLabel').textContent = t.editEmailLabel;
+    document.getElementById('editCountryLabel').textContent = t.editCountryLabel;
+    document.getElementById('editCityLabel').textContent = t.editCityLabel;
+    document.getElementById('editPriceLabel').textContent = t.editPriceLabel;
+    document.getElementById('editWorkHoursLabel').textContent = t.editWorkHoursLabel;
+    document.getElementById('editDescLabel').textContent = t.editDescLabel;
+    document.getElementById('editSubmitBtn').textContent = t.editSubmitBtn;
+    document.getElementById('privacyTitle').textContent = t.privacyTitle;
+    
+    populateCountryFilter();
+    populateCityFilter(countryFilter.value);
+    applyFilters();
+    
+    // إغلاق القائمة المنسدلة
+    closeLangDropdown();
+}
+        // فتح/إغلاق القائمة المنسدلة
+const langSelectBtn = document.getElementById('langSelectBtn');
+const langDropdown = document.getElementById('langDropdown');
+const langArrow = document.getElementById('langArrow');
+
+function toggleLangDropdown() {
+    langDropdown.classList.toggle('show');
+    langArrow.classList.toggle('open');
+}
+
+function closeLangDropdown() {
+    langDropdown.classList.remove('show');
+    langArrow.classList.remove('open');
+}
+
+langSelectBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleLangDropdown();
+});
+
+// اختيار لغة من القائمة
+document.querySelectorAll('.lang-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        changeLanguage(opt.dataset.lang);
+    });
+});
+
+// إغلاق القائمة عند النقر خارجها
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.lang-select-wrapper')) {
+        closeLangDropdown();
+    }
+});
+
+// إغلاق القائمة عند الضغط على Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeLangDropdown();
+    }
+});
         document.getElementById('searchBtn').addEventListener('click', applyFilters);
         document.getElementById('searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilters(); });
 
