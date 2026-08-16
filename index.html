@@ -1244,14 +1244,20 @@
             });
         }
 
-        function displayMarkers(services) {
+                function displayMarkers(services) {
             markersLayer.clearLayers();
             const t = translations[currentLang];
             services.forEach(p => {
                 const country = countriesData.find(c => c.code === p.country);
                 const cName = country ? (currentLang === 'ar' ? country.nameAr : country.name) : p.country;
+                let phonesHtml = '';
+                if (p.phone1) phonesHtml += `<p style="margin:2px 0;">📞 ${p.phone1}</p>`;
+                if (p.phone2) phonesHtml += `<p style="margin:2px 0;">📞 ${p.phone2}</p>`;
+                let contactHtml = '';
+                if (p.whatsapp) contactHtml += `<a href="https://wa.me/${p.whatsapp.replace(/\+/g,'')}" target="_blank" style="display:inline-block;margin:2px;color:#25D366;font-weight:700;">📱 واتساب</a>`;
+                if (p.email) contactHtml += `<a href="mailto:${p.email}" style="display:inline-block;margin:2px;color:#4285F4;font-weight:700;">📧 إيميل</a>`;
                 const marker = L.marker([p.lat, p.lng])
-                    .bindPopup(`<div style="color:white;padding:5px;min-width:160px;"><h4 style="color:#e94560;margin:0 0 4px;">${p.name}</h4><p style="margin:1px 0;"><b>${p.profession1}</b>${p.profession2?' / '+p.profession2:''}</p><p style="margin:1px 0;">📍 ${p.city}, ${cName}</p>${p.whatsapp?`<a href="https://wa.me/${p.whatsapp.replace(/\+/g,'')}" target="_blank" style="color:#25D366;">${t.contactWhatsApp}</a>`:''}</div>`, { className: 'custom-popup', maxWidth: 250 });
+                    .bindPopup(`<div style="color:#0a0a0a;padding:10px;min-width:220px;font-family:'Segoe UI',Tahoma,Arial,sans-serif;"><h4 style="color:#4285F4;margin:0 0 8px;font-size:1.1rem;font-weight:800;">👤 ${p.name}</h4><p style="margin:3px 0;font-weight:700;color:#333;">💼 ${p.profession1}${p.profession2?' / '+p.profession2:''}</p><p style="margin:3px 0;color:#555;">📍 ${p.city}، ${cName}</p>${phonesHtml}<div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap;">${contactHtml}</div></div>`, { className: 'custom-popup', maxWidth: 300 });
                 marker._pid = p.id;
                 markersLayer.addLayer(marker);
             });
