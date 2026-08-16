@@ -623,12 +623,12 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // ============================================
+                // ============================================
         // 🌍 نظام الترجمة متعدد اللغات (كامل)
         // ============================================
         const translations = {
             ar: {
-                logo: 'أنا أحتاج إلى...', tagline: 'أي خدمة، في أي مكان', searchPlaceholder: 'ماذا تحتاج؟', lblCountry: '🌍 الدولة', lblCity: '🏙️ المدينة',
+                logo: 'أنا أحتاج إلى...', tagline: 'أي خدمة، في أي مكان', searchPlaceholder: 'ماذا تحتاج؟ (طبيب، معلم، مهندس، عامل...)', lblCountry: '🌍 الدولة', lblCity: '🏙️ المدينة',
                 allCountries: 'كل الدول', allCities: 'كل المدن', nearMe: '📍 قريب مني', search: '🔍 بحث', noResults: 'لا توجد نتائج',
                 registerTitle: '🔽 هل أنت مقدم خدمة؟', registerBtn: '📝 سجل خدمتك هنا', visitorLabel: 'عدد الزوار:',
                 modalTitle: '📝 تسجيل مقدم خدمة جديد', lblName: '👤 الاسم الكامل', lblEmail: '📧 البريد الإلكتروني',
@@ -658,7 +658,7 @@
                 dir: 'rtl'
             },
             en: {
-                logo: 'I need...', tagline: 'Any Service, Anywhere', searchPlaceholder: 'What do you need?', lblCountry: '🌍 Country', lblCity: '🏙️ City',
+                logo: 'I need...', tagline: 'Any Service, Anywhere', searchPlaceholder: 'What do you need? (Doctor, Teacher, Engineer...)', lblCountry: '🌍 Country', lblCity: '🏙️ City',
                 allCountries: 'All Countries', allCities: 'All Cities', nearMe: '📍 Near Me', search: '🔍 Search', noResults: 'No results',
                 registerTitle: '🔽 Service Provider?', registerBtn: '📝 Register Here', visitorLabel: 'Visitors:',
                 modalTitle: '📝 New Provider', lblName: '👤 Full Name', lblEmail: '📧 Email',
@@ -688,7 +688,7 @@
                 dir: 'ltr'
             },
             fr: {
-                logo: "J'ai besoin de...", tagline: 'Tout Service, Partout', searchPlaceholder: 'De quoi avez-vous besoin?', lblCountry: '🌍 Pays', lblCity: '🏙️ Ville',
+                logo: "J'ai besoin de...", tagline: 'Tout Service, Partout', searchPlaceholder: 'De quoi avez-vous besoin? (Médecin, Professeur...)', lblCountry: '🌍 Pays', lblCity: '🏙️ Ville',
                 allCountries: 'Tous', allCities: 'Toutes', nearMe: '📍 Près de moi', search: '🔍 Chercher', noResults: 'Aucun résultat',
                 registerTitle: '🔽 Prestataire?', registerBtn: '📝 Enregistrer', visitorLabel: 'Visiteurs:',
                 modalTitle: '📝 Nouveau', lblName: '👤 Nom', lblEmail: '📧 Email',
@@ -718,7 +718,7 @@
                 dir: 'ltr'
             },
             de: {
-                logo: 'Ich brauche...', tagline: 'Jeder Service, Überall', searchPlaceholder: 'Was brauchen Sie?', lblCountry: '🌍 Land', lblCity: '🏙️ Stadt',
+                logo: 'Ich brauche...', tagline: 'Jeder Service, Überall', searchPlaceholder: 'Was brauchen Sie? (Arzt, Lehrer, Ingenieur...)', lblCountry: '🌍 Land', lblCity: '🏙️ Stadt',
                 allCountries: 'Alle', allCities: 'Alle', nearMe: '📍 Nähe', search: '🔍 Suchen', noResults: 'Keine Ergebnisse',
                 registerTitle: '🔽 Anbieter?', registerBtn: '📝 Registrieren', visitorLabel: 'Besucher:',
                 modalTitle: '📝 Neu', lblName: '👤 Name', lblEmail: '📧 Email',
@@ -748,7 +748,7 @@
                 dir: 'ltr'
             },
             es: {
-                logo: 'Necesito...', tagline: 'Cualquier Servicio', searchPlaceholder: '¿Qué necesitas?', lblCountry: '🌍 País', lblCity: '🏙️ Ciudad',
+                logo: 'Necesito...', tagline: 'Cualquier Servicio', searchPlaceholder: '¿Qué necesitas? (Doctor, Profesor, Ingeniero...)', lblCountry: '🌍 País', lblCity: '🏙️ Ciudad',
                 allCountries: 'Todos', allCities: 'Todas', nearMe: '📍 Cerca', search: '🔍 Buscar', noResults: 'Sin resultados',
                 registerTitle: '🔽 ¿Proveedor?', registerBtn: '📝 Registrar', visitorLabel: 'Visitantes:',
                 modalTitle: '📝 Nuevo', lblName: '👤 Nombre', lblEmail: '📧 Email',
@@ -778,7 +778,7 @@
                 dir: 'ltr'
             },
             tr: {
-                logo: 'İhtiyacım var...', tagline: 'Her Hizmet, Her Yerde', searchPlaceholder: 'Ne arıyorsunuz?', lblCountry: '🌍 Ülke', lblCity: '🏙️ Şehir',
+                logo: 'İhtiyacım var...', tagline: 'Her Hizmet, Her Yerde', searchPlaceholder: 'Ne arıyorsunuz? (Doktor, Öğretmen, Mühendis...)', lblCountry: '🌍 Ülke', lblCity: '🏙️ Şehir',
                 allCountries: 'Tümü', allCities: 'Tümü', nearMe: '📍 Yakınımda', search: '🔍 Ara', noResults: 'Sonuç yok',
                 registerTitle: '🔽 Sağlayıcı?', registerBtn: '📝 Kaydet', visitorLabel: 'Ziyaretçi:',
                 modalTitle: '📝 Yeni', lblName: '👤 Ad', lblEmail: '📧 E-posta',
@@ -808,7 +808,7 @@
                 dir: 'ltr'
             },
             ur: {
-                logo: 'مجھے ضرورت ہے...', tagline: 'کوئی بھی خدمت', searchPlaceholder: 'کیا چاہیے؟', lblCountry: '🌍 ملک', lblCity: '🏙️ شہر',
+                logo: 'مجھے ضرورت ہے...', tagline: 'کوئی بھی خدمت', searchPlaceholder: 'کیا چاہیے؟ (ڈاکٹر، استاد، انجینئر...)', lblCountry: '🌍 ملک', lblCity: '🏙️ شہر',
                 allCountries: 'تمام', allCities: 'تمام', nearMe: '📍 قریب', search: '🔍 تلاش', noResults: 'کوئی نہیں',
                 registerTitle: '🔽 پرووائیڈر؟', registerBtn: '📝 رجسٹر', visitorLabel: 'وزیٹر:',
                 modalTitle: '📝 نیا', lblName: '👤 نام', lblEmail: '📧 ای میل',
