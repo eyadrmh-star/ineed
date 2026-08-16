@@ -1376,6 +1376,7 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
             sorted.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'service-card' + (p.premium ? ' premium' : '');
+                card.setAttribute('data-provider-id', p.id);
                 const premiumBadge = p.premium ? `<span class="premium-badge">${t.premiumBadge}</span>` : '';
                 const country = countriesData.find(c => c.code === p.country);
                 const cName = country ? (currentLang === 'ar' ? country.nameAr : country.name) : p.country;
@@ -1418,7 +1419,20 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
                 const marker = L.marker([p.lat, p.lng])
                     .bindPopup(`<div style="color:#0a0a0a;padding:10px;min-width:220px;font-family:'Segoe UI',Tahoma,Arial,sans-serif;"><h4 style="color:#4285F4;margin:0 0 8px;font-size:1.1rem;font-weight:800;">👤 ${p.name}</h4><p style="margin:3px 0;font-weight:700;color:#333;">💼 ${p.profession1}${p.profession2?' / '+p.profession2:''}</p><p style="margin:3px 0;color:#555;">📍 ${p.city}، ${cName}</p>${phonesHtml}<div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap;">${contactHtml}</div></div>`, { className: 'custom-popup', maxWidth: 300 });
                 marker._pid = p.id;
-                markersLayer.addLayer(marker);
+marker.on('click', () => {
+    const card = document.querySelector(`[data-provider-id="${p.id}"]`);
+    if (card) {
+        card.parentNode.prepend(card);
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        card.style.borderColor = 'var(--blue)';
+        card.style.boxShadow = '0 0 25px rgba(66,133,244,0.5)';
+        setTimeout(() => {
+            card.style.borderColor = '';
+            card.style.boxShadow = '';
+        }, 2000);
+    }
+});
+markersLayer.addLayer(marker);
             });
         }
 
