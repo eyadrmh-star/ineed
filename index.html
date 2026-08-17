@@ -642,33 +642,52 @@
             <button class="close-btn" id="closeAdminPanel">✕</button>
             <h3 id="adminPanelTitle">🛡️ لوحة التحكم - Admin Panel</h3>
             <div class="stats-row" id="adminStats">
-                <div class="stat-card"><div class="stat-number" id="statProviders">0</div><div class="stat-label" id="statProvidersLabel">مزود خدمة</div></div>
-                <div class="stat-card"><div class="stat-number" id="statVerified">0</div><div class="stat-label" id="statVerifiedLabel">موثقين ✅</div></div>
-                <div class="stat-card"><div class="stat-number" id="statPremium">0</div><div class="stat-label" id="statPremiumLabel">ممولين 💎</div></div>
-                <div class="stat-card"><div class="stat-number" id="statVisitors">0</div><div class="stat-label" id="statVisitorsLabel">زائر</div></div>
-                <div class="stat-card"><div class="stat-number" id="statCountries">0</div><div class="stat-label" id="statCountriesLabel">دولة</div></div>
-            </div>
+    <div class="stat-card"><div class="stat-number" id="statProviders">0</div><div class="stat-label" id="statProvidersLabel">مزود خدمة</div></div>
+    <div class="stat-card"><div class="stat-number" id="statVerified">0</div><div class="stat-label" id="statVerifiedLabel">موثقين ✅</div></div>
+    <div class="stat-card"><div class="stat-number" id="statPremium">0</div><div class="stat-label" id="statPremiumLabel">ممولين 💎</div></div>
+    <div class="stat-card"><div class="stat-number" id="statVisitors">0</div><div class="stat-label" id="statVisitorsLabel">زائر</div></div>
+    <div class="stat-card"><div class="stat-number" id="statCountries">0</div><div class="stat-label" id="statCountriesLabel">دولة</div></div>
+    <div class="stat-card"><div class="stat-number" id="statVisitorsToday">0</div><div class="stat-label" id="statVisitorsTodayLabel">زيارات اليوم</div></div>
+</div>
+<div class="stats-row" id="adminStats2">
+    <div class="stat-card"><div class="stat-number" id="statTopCity" style="font-size:1rem;">—</div><div class="stat-label">أكثر مدينة</div></div>
+    <div class="stat-card"><div class="stat-number" id="statTopProfession" style="font-size:1rem;">—</div><div class="stat-label">أكثر مهنة</div></div>
+    <div class="stat-card"><div class="stat-number" id="statAvgRating">0</div><div class="stat-label">متوسط التقييم</div></div>
+</div>
             <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-                <button class="submit-btn success" id="exportCSVBtn" style="flex:1;">📥 تصدير CSV</button>
-                <button class="submit-btn warning" id="changePasswordBtn" style="flex:1;">🔑 تغيير كلمة المرور</button>
-                <button class="submit-btn danger" id="clearAllBtn" style="flex:1;">🗑️ حذف الكل</button>
-            </div>
+    <input type="text" id="adminSearchInput" placeholder="🔍 بحث: اسم، مهنة، مدينة..." style="flex:2;min-width:150px;padding:12px;border-radius:20px;border:2px solid var(--blue);background:white;color:var(--text);font-size:0.9rem;font-weight:600;">
+    <select id="adminFilterStatus" style="flex:1;min-width:120px;padding:12px;border-radius:20px;border:2px solid var(--blue);background:white;color:var(--text);font-size:0.9rem;font-weight:600;">
+        <option value="all">الكل</option>
+        <option value="verified">✅ موثقين</option>
+        <option value="unverified">❌ غير موثقين</option>
+        <option value="premium">💎 ممولين</option>
+    </select>
+    <button class="submit-btn success" id="exportCSVBtn" style="flex:1;">📥 CSV</button>
+    <button class="submit-btn warning" id="changePasswordBtn" style="flex:1;">🔑 كلمة المرور</button>
+    <button class="submit-btn danger" id="clearAllBtn" style="flex:1;">🗑️ حذف الكل</button>
+</div>
+<div style="background:var(--card);border-radius:15px;padding:12px;margin-bottom:10px;border:2px solid var(--border);max-height:100px;overflow-y:auto;">
+    <strong>📋 سجل النشاطات:</strong>
+    <div id="activityLog" style="font-size:0.8rem;color:var(--muted);margin-top:5px;">لا يوجد نشاطات</div>
+</div>
             <div style="max-height:400px;overflow-y:auto;">
                 <table class="admin-table" id="adminTable">
                     <thead>
-                        <tr>
-                            <th>#</th>
-                            <th id="thName">الاسم</th>
-                            <th id="thProfession">المهنة</th>
-                            <th id="thCity">المدينة</th>
-                            <th id="thViews">مشاهدات</th>
-                            <th id="thClicks">نقرات</th>
-                            <th id="thRating">تقييم</th>
-                            <th id="thVerified">موثق</th>
-                            <th id="thPremium">ممول</th>
-                            <th id="thActions">إجراءات</th>
-                        </tr>
-                    </thead>
+    <tr>
+        <th>#</th>
+        <th id="thName" onclick="sortAdminTable('name')" style="cursor:pointer;">الاسم ↕</th>
+        <th id="thProfession" onclick="sortAdminTable('profession1')" style="cursor:pointer;">المهنة ↕</th>
+        <th id="thCity" onclick="sortAdminTable('city')" style="cursor:pointer;">المدينة ↕</th>
+        <th>📞 الهاتف</th>
+        <th>📧 الإيميل</th>
+        <th id="thViews" onclick="sortAdminTable('views')" style="cursor:pointer;">مشاهدات ↕</th>
+        <th id="thClicks" onclick="sortAdminTable('clicks')" style="cursor:pointer;">نقرات ↕</th>
+        <th id="thRating" onclick="sortAdminTable('rating')" style="cursor:pointer;">تقييم ↕</th>
+        <th id="thVerified">موثق</th>
+        <th id="thPremium">ممول</th>
+        <th id="thActions">إجراءات</th>
+    </tr>
+</thead>
                     <tbody id="adminTableBody"></tbody>
                 </table>
             </div>
@@ -1343,17 +1362,28 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
         // 👀 عداد الزوار (Firebase)
         // ============================================
         async function updateVisitorCount() {
-            const docRef = db.collection('stats').doc('visitors');
-            const doc = await docRef.get();
-            if (doc.exists) {
-                const count = (doc.data().count || 0) + 1;
-                await docRef.update({ count });
-                document.getElementById('visitorCount').textContent = count.toLocaleString();
-            } else {
-                await docRef.set({ count: 1 });
-                document.getElementById('visitorCount').textContent = '1';
-            }
-        }
+    const docRef = db.collection('stats').doc('visitors');
+    const doc = await docRef.get();
+    if (doc.exists) {
+        const count = (doc.data().count || 0) + 1;
+        await docRef.update({ count });
+        document.getElementById('visitorCount').textContent = count.toLocaleString();
+    } else {
+        await docRef.set({ count: 1 });
+        document.getElementById('visitorCount').textContent = '1';
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    const dailyRef = db.collection('stats').doc('dailyVisitors');
+    const dailyDoc = await dailyRef.get();
+    if (dailyDoc.exists) {
+        const data = dailyDoc.data();
+        data[today] = (data[today] || 0) + 1;
+        await dailyRef.update(data);
+    } else {
+        await dailyRef.set({ [today]: 1 });
+    }
+}
 
         // ============================================
         // عرض النتائج
@@ -1675,7 +1705,8 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     premium: false, views: 0, clicks: 0, photo: '', gallery: []
 };
             await db.collection('providers').add(newProvider);
-            alert(t.successMsg);
+await logActivity(`📝 تسجيل مزود جديد: ${newProvider.name}`);
+alert(t.successMsg);
             this.reset();
             googleVerified = false; googleUserData = null;
             document.getElementById('googleAuthSection').classList.remove('verified');
@@ -1730,69 +1761,182 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         });
         document.getElementById('adminPassword').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('adminLoginBtn').click(); });
 
-        function openAdminPanel() { adminPanelModal.classList.add('show'); updateAdminStats(); populateAdminTable(); }
+        function openAdminPanel() { adminPanelModal.classList.add('show'); updateAdminStats(); populateAdminTable(); updateActivityLog(); }
         document.getElementById('closeAdminPanel').addEventListener('click', () => { adminPanelModal.classList.remove('show'); });
         adminPanelModal.addEventListener('click', e => { if (e.target === adminPanelModal) adminPanelModal.classList.remove('show'); });
 
         function updateAdminStats() {
-            document.getElementById('statProviders').textContent = serviceProviders.length;
-            document.getElementById('statVerified').textContent = serviceProviders.filter(p => p.verified).length;
-            document.getElementById('statPremium').textContent = serviceProviders.filter(p => p.premium).length;
-            db.collection('stats').doc('visitors').get().then(doc => {
-                document.getElementById('statVisitors').textContent = doc.exists ? doc.data().count : 0;
-            });
-            document.getElementById('statCountries').textContent = new Set(serviceProviders.map(p => p.country)).size;
+    document.getElementById('statProviders').textContent = serviceProviders.length;
+    document.getElementById('statVerified').textContent = serviceProviders.filter(p => p.verified).length;
+    document.getElementById('statPremium').textContent = serviceProviders.filter(p => p.premium).length;
+    db.collection('stats').doc('visitors').get().then(doc => {
+        document.getElementById('statVisitors').textContent = doc.exists ? doc.data().count : 0;
+    });
+    document.getElementById('statCountries').textContent = new Set(serviceProviders.map(p => p.country)).size;
+        const today = new Date().toISOString().split('T')[0];
+    db.collection('stats').doc('dailyVisitors').get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            const count = data[today] || 0;
+            document.getElementById('statVisitorsToday').textContent = count;
+        } else {
+            document.getElementById('statVisitorsToday').textContent = 0;
         }
+    });
+    
+    // أكثر مدينة
+    const cityCounts = {};
+    serviceProviders.forEach(p => {
+        if (p.city) cityCounts[p.city] = (cityCounts[p.city] || 0) + 1;
+    });
+    const topCity = Object.entries(cityCounts).sort((a,b) => b[1] - a[1])[0];
+    document.getElementById('statTopCity').textContent = topCity ? `${topCity[0]} (${topCity[1]})` : '—';
+    
+    // أكثر مهنة
+    const profCounts = {};
+    serviceProviders.forEach(p => {
+        if (p.profession1) profCounts[p.profession1] = (profCounts[p.profession1] || 0) + 1;
+    });
+    const topProf = Object.entries(profCounts).sort((a,b) => b[1] - a[1])[0];
+    document.getElementById('statTopProfession').textContent = topProf ? `${topProf[0]} (${topProf[1]})` : '—';
+    
+    // متوسط التقييم
+    const totalRating = serviceProviders.reduce((sum, p) => sum + (p.rating || 0), 0);
+    const totalCount = serviceProviders.reduce((sum, p) => sum + (p.ratingCount || 0), 0);
+    const avgRating = totalCount > 0 ? (totalRating / totalCount).toFixed(1) : 0;
+    document.getElementById('statAvgRating').textContent = `⭐ ${avgRating}`;
+}
 
         function populateAdminTable() {
-            const tbody = document.getElementById('adminTableBody');
-            const t = translations[currentLang];
-            tbody.innerHTML = '';
-            serviceProviders.forEach((p, index) => {
+    const tbody = document.getElementById('adminTableBody');
+    const t = translations[currentLang];
+    const searchQuery = document.getElementById('adminSearchInput').value.toLowerCase().trim();
+    const statusFilter = document.getElementById('adminFilterStatus').value;
+    let filteredProviders = [...serviceProviders];
+    if (searchQuery) {
+        filteredProviders = filteredProviders.filter(p => 
+            (p.name && p.name.toLowerCase().includes(searchQuery)) ||
+            (p.profession1 && p.profession1.toLowerCase().includes(searchQuery)) ||
+            (p.profession2 && p.profession2.toLowerCase().includes(searchQuery)) ||
+            (p.city && p.city.toLowerCase().includes(searchQuery)) ||
+            (p.email && p.email.toLowerCase().includes(searchQuery))
+        );
+    }
+    if (statusFilter === 'verified') {
+        filteredProviders = filteredProviders.filter(p => p.verified);
+    } else if (statusFilter === 'unverified') {
+        filteredProviders = filteredProviders.filter(p => !p.verified);
+    } else if (statusFilter === 'premium') {
+        filteredProviders = filteredProviders.filter(p => p.premium);
+    }
+        if (adminSortField) {
+        filteredProviders.sort((a, b) => {
+            let valA = a[adminSortField] || '';
+            let valB = b[adminSortField] || '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return -1 * adminSortDirection;
+            if (valA > valB) return 1 * adminSortDirection;
+            return 0;
+        });
+    }
+    tbody.innerHTML = '';
+    filteredProviders.forEach((p, index) => {
                 const verifiedBadge = p.verified ? '<span class="badge verified">✅ موثوق</span>' : '<span class="badge unverified">❌ غير موثوق</span>';
                 const premiumBadge = p.premium ? '<span class="badge premium">💎</span>' : '<span class="badge unverified">-</span>';
                 const row = document.createElement('tr');
-                row.innerHTML = `<td>${index+1}</td><td>${p.name}</td><td>${p.profession1}${p.profession2?' / '+p.profession2:''}</td><td>${p.city}</td><td>${p.views||0}</td><td>${p.clicks||0}</td><td>⭐ ${(p.rating/(p.ratingCount||1)).toFixed(1)} (${p.ratingCount||0})</td><td>${verifiedBadge}</td><td>${premiumBadge}</td><td><button class="edit-btn" onclick="editProvider('${p.id}')">✏️</button> <button class="verify-btn" onclick="toggleVerify('${p.id}')">${p.verified?'❌':'✅'}</button> <button class="premium-btn" onclick="togglePremium('${p.id}')">💎</button> <button class="delete-btn" onclick="deleteProvider('${p.id}')">🗑️</button></td>`;
-                tbody.appendChild(row);
+                const whatsappLink = p.whatsapp ? `<a href="https://wa.me/${p.whatsapp.replace(/\+/g,'')}" target="_blank" style="color:#25D366;font-weight:700;text-decoration:none;">📱</a>` : '—';
+const emailLink = p.email ? `<a href="mailto:${p.email}" style="color:#4285F4;font-weight:700;text-decoration:none;">📧</a>` : '—';
+row.innerHTML = `<td>${index+1}</td><td>${p.name}</td><td>${p.profession1}${p.profession2?' / '+p.profession2:''}</td><td>${p.city}</td><td>${whatsappLink}</td><td>${emailLink}</td><td>${p.views||0}</td><td>${p.clicks||0}</td><td>⭐ ${(p.rating/(p.ratingCount||1)).toFixed(1)} (${p.ratingCount||0})</td><td>${verifiedBadge}</td><td>${premiumBadge}</td><td><button class="edit-btn" onclick="editProvider('${p.id}')">✏️</button> <button class="verify-btn" onclick="toggleVerify('${p.id}')">${p.verified?'❌':'✅'}</button> <button class="premium-btn" onclick="togglePremium('${p.id}')">💎</button> <button class="delete-btn" onclick="deleteProvider('${p.id}')">🗑️</button></td>`;
+                                tbody.appendChild(row);
             });
         }
 
+document.getElementById('adminSearchInput').addEventListener('input', populateAdminTable);
+document.getElementById('adminFilterStatus').addEventListener('change', populateAdminTable);
+        async function logActivity(action) {
+    const timestamp = new Date().toISOString();
+    const logRef = db.collection('stats').doc('activityLog');
+    const doc = await logRef.get();
+    if (doc.exists) {
+        const data = doc.data();
+        data.activities = data.activities || [];
+        data.activities.unshift({ action, timestamp });
+        if (data.activities.length > 50) data.activities = data.activities.slice(0, 50);
+        await logRef.update(data);
+    } else {
+        await logRef.set({ activities: [{ action, timestamp }] });
+    }
+    updateActivityLog();
+}
+
+async function updateActivityLog() {
+    const logElement = document.getElementById('activityLog');
+    const logRef = db.collection('stats').doc('activityLog');
+    const doc = await logRef.get();
+    if (doc.exists && doc.data().activities && doc.data().activities.length > 0) {
+        const activities = doc.data().activities;
+        logElement.innerHTML = activities.map(a => {
+            const date = new Date(a.timestamp).toLocaleString('ar');
+            return `<div>📌 ${a.action} <span style="font-size:0.7rem;">(${date})</span></div>`;
+        }).join('');
+    } else {
+        logElement.innerHTML = 'لا يوجد نشاطات';
+    }
+}
+    let adminSortField = null;
+let adminSortDirection = 1;
+
+window.sortAdminTable = function(field) {
+    if (adminSortField === field) {
+        adminSortDirection *= -1;
+    } else {
+        adminSortField = field;
+        adminSortDirection = 1;
+    }
+    populateAdminTable();
+};
+
                 async function deleteProvider(id) {
-            if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
-                alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
-                return;
-            }
-            if (confirm(translations[currentLang].confirmDelete)) {
-                await db.collection('providers').doc(id).delete();
-                await loadProvidersFromFirebase();
-                updateAdminStats(); populateAdminTable();
-            }
-        }
+    if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
+        alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
+        return;
+    }
+    if (confirm(translations[currentLang].confirmDelete)) {
+        const p = serviceProviders.find(x => x.id === id);
+        await db.collection('providers').doc(id).delete();
+        await logActivity(`🗑️ حذف مزود: ${p ? p.name : id}`);
+        await loadProvidersFromFirebase();
+        updateAdminStats(); populateAdminTable();
+    }
+}
 
                 async function toggleVerify(id) {
-            if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
-                alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
-                return;
-            }
-            const p = serviceProviders.find(x => x.id === id);
-            if (p) {
-                await db.collection('providers').doc(id).update({ verified: !p.verified });
-                await loadProvidersFromFirebase();
-                updateAdminStats(); populateAdminTable();
-            }
-        }
+    if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
+        alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
+        return;
+    }
+    const p = serviceProviders.find(x => x.id === id);
+    if (p) {
+        await db.collection('providers').doc(id).update({ verified: !p.verified });
+        await logActivity(`${p.verified ? '❌ إلغاء توثيق' : '✅ توثيق'} مزود: ${p.name}`);
+        await loadProvidersFromFirebase();
+        updateAdminStats(); populateAdminTable();
+    }
+}
                 async function togglePremium(id) {
-            if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
-                alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
-                return;
-            }
-            const p = serviceProviders.find(x => x.id === id);
-            if (p) {
-                await db.collection('providers').doc(id).update({ premium: !p.premium });
-                await loadProvidersFromFirebase();
-                updateAdminStats(); populateAdminTable();
-            }
-        }
+    if (!auth.currentUser || auth.currentUser.email !== 'eyadrmh@gmail.com') {
+        alert('❌ يجب تسجيل دخول Google كأدمن أولاً!');
+        return;
+    }
+    const p = serviceProviders.find(x => x.id === id);
+    if (p) {
+        await db.collection('providers').doc(id).update({ premium: !p.premium });
+        await logActivity(`${p.premium ? '❌ إلغاء تمويل' : '💎 تمويل'} مزود: ${p.name}`);
+        await loadProvidersFromFirebase();
+        updateAdminStats(); populateAdminTable();
+    }
+}
 
         window.editProvider = function(id) {
     const p = serviceProviders.find(x => x.id === id);
@@ -1842,10 +1986,11 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             };
             if (country) { updatedData.lat = country.lat + (Math.random()-0.5)*2; updatedData.lng = country.lng + (Math.random()-0.5)*2; }
             await db.collection('providers').doc(id).update(updatedData);
-            document.getElementById('editProviderModal').classList.remove('show');
-            await loadProvidersFromFirebase();
-            updateAdminStats(); populateAdminTable();
-            alert('✅ تم حفظ التعديلات بنجاح!');
+await logActivity(`✏️ تعديل مزود: ${updatedData.name}`);
+document.getElementById('editProviderModal').classList.remove('show');
+await loadProvidersFromFirebase();
+updateAdminStats(); populateAdminTable();
+alert('✅ تم حفظ التعديلات بنجاح!');
         });
 
         document.getElementById('exportCSVBtn').addEventListener('click', () => {
@@ -1882,8 +2027,9 @@ document.getElementById('registerForm').addEventListener('submit', async functio
                 const batch = db.batch();
                 snapshot.forEach(doc => batch.delete(doc.ref));
                 await batch.commit();
-                await loadProvidersFromFirebase();
-                updateAdminStats(); populateAdminTable();
+await logActivity('🗑️ حذف جميع المزودين');
+await loadProvidersFromFirebase();
+updateAdminStats(); populateAdminTable();
             }
         });
 
