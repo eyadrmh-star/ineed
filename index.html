@@ -1646,10 +1646,16 @@ document.getElementById('getLocationBtn').addEventListener('click', () => {
 });
 
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const t = translations[currentLang];
-            if (!googleVerified) { alert(t.googleRequired); return; }
-            const cc = document.getElementById('regCountry').value;
+    e.preventDefault();
+    const t = translations[currentLang];
+    if (!googleVerified) { alert(t.googleRequired); return; }
+    const regEmail = document.getElementById('regEmail').value;
+    const existingProvider = serviceProviders.find(p => p.email && p.email.toLowerCase() === regEmail.toLowerCase());
+    if (existingProvider) {
+        alert('❌ هذا الإيميل مسجل مسبقاً! لا يمكنك التسجيل مرتين.');
+        return;
+    }
+    const cc = document.getElementById('regCountry').value;
             const country = countriesData.find(c => c.code === cc);
             const newProvider = {
     name: document.getElementById('regName').value,
