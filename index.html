@@ -555,6 +555,7 @@
 
             <div class="divider-text" id="dividerText">── بيانات الخدمة ──</div>
 
+            
             <form id="registerForm">
                 <div class="form-group"><label id="lblName">👤 الاسم الكامل</label><input type="text" id="regName" required></div>
                 <div class="form-group"><label id="lblEmail">📧 البريد الإلكتروني</label><input type="email" id="regEmail" required readonly></div>
@@ -1690,6 +1691,34 @@ document.getElementById('getLocationBtn').addEventListener('click', () => {
     }, { enableHighAccuracy: true, timeout: 10000 });
 });
 
+const MAILERSEND_TOKEN = 'mlsn.baf4ec4a7f8ee23c045618342f90bcdfe53f3b0b0eebaef200aeafa0c6243495';
+const WELCOME_TEMPLATE_ID = 'jpzkmgq5e8mg059v';
+const NOTIFICATION_TEMPLATE_ID = '7dnvo4dyo3n45r86';
+
+async function sendEmail(templateId, to, toName, data) {
+    try {
+        const response = await fetch('https://api.mailersend.com/v1/email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Authorization': `Bearer ${MAILERSEND_TOKEN}`
+            },
+            body: JSON.stringify({
+                from: { email: 'info@ineedyour.com', name: 'ineedyour.com' },
+                to: [{ email: to, name: toName }],
+                template_id: templateId,
+                personalization: [{
+                    email: to,
+                    data: data
+                }]
+            })
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Email error:', error);
+    }
+}        
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const t = translations[currentLang];
@@ -1721,6 +1750,24 @@ document.getElementById('registerForm').addEventListener('submit', async functio
 };
             await db.collection('providers').add(newProvider);
 await logActivity(`📝 تسجيل مزود جديد: ${newProvider.name}`);
+    // إرسال إيميل ترحيبي للمزود الجديد
+sendEmail(WELCOME_TEMPLATE_ID, newProvider.email, newProvider.name, {
+    name: newProvider.name,
+    profession: newProvider.profession1,
+    city: newProvider.city
+});
+
+// إرسال إيميل لمزودي نفس المدينة
+const sameCityProviders = serviceProviders.filter(p => p.email && p.email !== newProvider.email && p.city && p.city.toLowerCase() === newProvider.city.toLowerCase());
+sameCityProviders.forEach(p => {
+    sendEmail(NOTIFICATION_TEMPLATE_ID, p.email, p.name, {
+        name: p.name,
+        city: newProvider.city,
+        new_name: newProvider.name,
+        new_profession: newProvider.profession1,
+        new_phone: newProvider.phone1
+    });
+});
 alert(t.successMsg);
             this.reset();
             googleVerified = false; googleUserData = null;
