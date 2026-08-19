@@ -1010,6 +1010,19 @@
         let serviceProviders = [];
         let adminPassword = 'admin123';
 
+        const cityCoordinates = {
+    'Amman': { lat: 31.9539, lng: 35.9106 },
+    'Zarqa': { lat: 32.0833, lng: 36.1000 },
+    'Irbid': { lat: 32.5556, lng: 35.8500 },
+    'Aqaba': { lat: 29.5319, lng: 35.0061 },
+    'Salt': { lat: 32.0397, lng: 35.7278 },
+    'Madaba': { lat: 31.7167, lng: 35.8000 },
+    'Karak': { lat: 31.1844, lng: 35.7050 },
+    'Mafraq': { lat: 32.3428, lng: 36.2083 },
+    'Tafilah': { lat: 30.8375, lng: 35.6042 },
+    'Jerash': { lat: 32.2769, lng: 35.9056 }
+};
+        
         // قائمة المهن المقترحة
         const professionsList = [
             'معلم', 'مدرس', 'أستاذ', 'محاضر', 'مدرب',
@@ -1743,8 +1756,8 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     price: document.getElementById('regPrice').value || '',
     workHours: document.getElementById('regWorkHours').value || '',
     desc: document.getElementById('regDesc').value || '',
-    lat: regLat || (country ? country.lat + (Math.random()-0.5)*0.01 : 25),
-lng: regLng || (country ? country.lng + (Math.random()-0.5)*0.01 : 45),
+    lat: regLat || (cityCoordinates[document.getElementById('regCity').value] ? cityCoordinates[document.getElementById('regCity').value].lat : (country ? country.lat + (Math.random()-0.5)*0.01 : 25)),
+lng: regLng || (cityCoordinates[document.getElementById('regCity').value] ? cityCoordinates[document.getElementById('regCity').value].lng : (country ? country.lng + (Math.random()-0.5)*0.01 : 45)),
     rating: 5.0, ratingCount: 1, reviews: 0, verified: true,
     premium: false, views: 0, clicks: 0, photo: '', gallery: []
 };
@@ -2046,7 +2059,14 @@ window.sortAdminTable = function(field) {
                 workHours: document.getElementById('editWorkHours').value,
                 desc: document.getElementById('editDesc').value,
             };
-            if (country) { updatedData.lat = country.lat + (Math.random()-0.5)*0.01; updatedData.lng = country.lng + (Math.random()-0.5)*0.01; }
+            const editCity = document.getElementById('editCity').value;
+if (cityCoordinates[editCity]) {
+    updatedData.lat = cityCoordinates[editCity].lat;
+    updatedData.lng = cityCoordinates[editCity].lng;
+} else if (country) {
+    updatedData.lat = country.lat + (Math.random()-0.5)*0.01;
+    updatedData.lng = country.lng + (Math.random()-0.5)*0.01;
+}
             await db.collection('providers').doc(id).update(updatedData);
 await logActivity(`✏️ تعديل مزود: ${updatedData.name}`);
 document.getElementById('editProviderModal').classList.remove('show');
