@@ -1743,8 +1743,8 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     price: document.getElementById('regPrice').value || '',
     workHours: document.getElementById('regWorkHours').value || '',
     desc: document.getElementById('regDesc').value || '',
-    lat: regLat || (country ? country.lat + (Math.random()-0.5)*2 : 25),
-    lng: regLng || (country ? country.lng + (Math.random()-0.5)*2 : 45),
+    lat: regLat || (country ? country.lat + (Math.random()-0.5)*0.2 : 25),
+lng: regLng || (country ? country.lng + (Math.random()-0.5)*0.2 : 45),
     rating: 5.0, ratingCount: 1, reviews: 0, verified: true,
     premium: false, views: 0, clicks: 0, photo: '', gallery: []
 };
