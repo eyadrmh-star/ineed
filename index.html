@@ -1344,7 +1344,7 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
                 serviceProviders.push(data);
             });
             
-            if (serviceProviders.length === 0) {
+            if (serviceProviders.length === 0 && !localStorage.getItem('defaultProvidersAdded')) {
                 const defaultProviders = [
                     { name: 'أحمد محمد', profession1: 'مدرس إنجليزي', profession2: 'مترجم قانوني', phone1: '+966501234567', phone2: '+966551234567', whatsapp: '+966501234567', email: 'ahmed@email.com', country: 'SA', city: 'Riyadh', price: '$20/ساعة', workHours: '4م - 10م', desc: 'خبرة 5 سنوات، تحضير IELTS و TOEFL.', lat: 24.7136, lng: 46.6753, rating: 4.8, ratingCount: 1, reviews: 120, verified: true, premium: false, views: 0, clicks: 0, photo: '', gallery: [] },
                     { name: 'سارة علي', profession1: 'ممرضة', profession2: '', phone1: '+966551234567', phone2: '', whatsapp: '+966551234567', email: 'sara@email.com', country: 'SA', city: 'Jeddah', price: '', workHours: '8ص - 8م', desc: 'ممرضة معتمدة، رعاية منزلية.', lat: 21.4858, lng: 39.1925, rating: 4.9, ratingCount: 1, reviews: 85, verified: true, premium: false, views: 0, clicks: 0, photo: '', gallery: [] },
@@ -1366,7 +1366,7 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
                     serviceProviders.push(data);
                 });
             }
-            
+            localStorage.setItem('defaultProvidersAdded', 'true');
             await loadAdminPasswordFromFirebase();
             await updateVisitorCount();
             displayServices(serviceProviders);
