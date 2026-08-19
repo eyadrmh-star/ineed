@@ -2046,7 +2046,7 @@ window.sortAdminTable = function(field) {
                 workHours: document.getElementById('editWorkHours').value,
                 desc: document.getElementById('editDesc').value,
             };
-            if (country) { updatedData.lat = country.lat + (Math.random()-0.5)*2; updatedData.lng = country.lng + (Math.random()-0.5)*2; }
+            if (country) { updatedData.lat = country.lat + (Math.random()-0.5)*0.2; updatedData.lng = country.lng + (Math.random()-0.5)*0.2; }
             await db.collection('providers').doc(id).update(updatedData);
 await logActivity(`✏️ تعديل مزود: ${updatedData.name}`);
 document.getElementById('editProviderModal').classList.remove('show');
