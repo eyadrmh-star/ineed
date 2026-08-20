@@ -1336,13 +1336,23 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
         // 📥 تحميل البيانات من Firebase
         // ============================================
         async function loadProvidersFromFirebase() {
-            const snapshot = await db.collection('providers').get();
-            serviceProviders = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                data.id = doc.id;
-                serviceProviders.push(data);
-            });
+    // قراءة البيانات المخزنة مسبقاً وعرضها فوراً
+    const cached = localStorage.getItem('cachedProviders');
+    if (cached) {
+        serviceProviders = JSON.parse(cached);
+        displayServices(serviceProviders);
+        displayMarkers(serviceProviders);
+        populateCountryFilter();
+    }
+    
+    const snapshot = await db.collection('providers').get();
+    serviceProviders = [];
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        data.id = doc.id;
+        serviceProviders.push(data);
+    });
+    localStorage.setItem('cachedProviders', JSON.stringify(serviceProviders));
             
             if (serviceProviders.length === 0 && !localStorage.getItem('defaultProvidersAdded')) {
                 const defaultProviders = [
@@ -1366,7 +1376,8 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
                     serviceProviders.push(data);
                 });
             }
-            localStorage.setItem('defaultProvidersAdded', 'true');
+                        localStorage.setItem('defaultProvidersAdded', 'true');
+            localStorage.setItem('cachedProviders', JSON.stringify(serviceProviders));
             await loadAdminPasswordFromFirebase();
             await updateVisitorCount();
             displayServices(serviceProviders);
