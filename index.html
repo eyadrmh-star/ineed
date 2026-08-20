@@ -1796,8 +1796,20 @@ alert(t.successMsg);
         // زر Contact Us
         // ============================================
         document.getElementById('contactBtn').addEventListener('click', () => {
-            window.location.href = 'mailto:eyadrmh@gmail.com?subject=استفسار من تطبيق I need&body=مرحباً، لدي استفسار حول التطبيق...';
-        });
+    const contactInfo = `
+📞 تواصل معنا | Contact Us
+━━━━━━━━━━━━━━━━━━━━
+📧 eyadrmh@gmail.com
+📱 +962775388520
+💬 واتساب: +962775388520
+📍 السلط - الأردن | Salt - Jordan
+━━━━━━━━━━━━━━━━━━━━
+منصة "أنا أحتاج إلى..." تربطك بأي خدمة في أي مكان. ابحث، قارن، وتواصل مباشرة مع مزودي الخدمات الموثوقين.
+
+"I need..." platform connects you to any service anywhere. Search, compare, and contact trusted service providers directly.
+`;
+    alert(contactInfo);
+});
 
         // ============================================
         // نافذة Privacy Policy
