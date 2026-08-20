@@ -529,11 +529,11 @@
         <div class="map-panel"><div id="map"></div></div>
 
         <!-- العمود الأيمن: النتائج -->
-        <div class="right-panel">
-            <div class="results-header" id="resultsCount">لا توجد نتائج</div>
-            <div class="results-list" id="resultsList"></div>
-        </div>
-    </div>
+<div class="right-panel">
+    <div class="results-header" id="resultsCount">لا توجد نتائج</div>
+    <div id="loadingSpinner" style="text-align:center;padding:30px;color:var(--blue);font-weight:700;font-size:1.2rem;">⏳ جاري التحميل...</div>
+    <div class="results-list" id="resultsList"></div>
+</div>
 
     <!-- نافذة التسجيل -->
     <div class="modal-overlay" id="registerModal">
@@ -1460,8 +1460,9 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
                     markersLayer.eachLayer(m => { if (m._pid === p.id) m.openPopup(); });
                 });
                 list.appendChild(card);
-            });
-        }
+    });
+    document.getElementById('loadingSpinner').style.display = 'none';
+}
 
                 function displayMarkers(services) {
             markersLayer.clearLayers();
