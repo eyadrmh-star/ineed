@@ -1015,6 +1015,13 @@
         let serviceProviders = [];
         let adminPassword = 'admin123';
 
+        const advertisements = [
+    { id: 1, text: '📢 أعلن هنا - إعلانك يوصل لآلاف المستخدمين', link: 'mailto:eyadrmh@gmail.com' },
+    { id: 2, text: '🔧 محتاج سباك؟ ابحث في ineedyour.com', link: 'https://ineedyour.com' },
+    { id: 3, text: '📝 سجل خدمتك مجاناً وليشاهدك الجميع', link: 'https://ineedyour.com' },
+    { id: 4, text: '🌍 منصة الخدمات الأولى في الأردن', link: 'https://ineedyour.com' }
+];
+let currentAdIndex = 0;
         const cityCoordinates = {
     'Amman': { lat: 31.9539, lng: 35.9106 },
     'Zarqa': { lat: 32.0833, lng: 36.1000 },
@@ -2330,6 +2337,17 @@ document.addEventListener('keydown', (e) => {
         document.getElementById('searchBtn').addEventListener('click', applyFilters);
         document.getElementById('searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilters(); });
 
+       function rotateAds() {
+    const adBanner = document.getElementById('adBanner');
+    if (!adBanner) return;
+    const ad = advertisements[currentAdIndex];
+    adBanner.innerHTML = ad.text;
+    adBanner.onclick = () => window.open(ad.link, '_blank');
+    currentAdIndex = (currentAdIndex + 1) % advertisements.length;
+}
+
+setInterval(rotateAds, 10000);
+        
         // ============================================
         // بدء التشغيل
         // ============================================
@@ -2337,6 +2355,7 @@ document.addEventListener('keydown', (e) => {
             populateCountryFilter();
             setupSuggestions();
             await loadProvidersFromFirebase();
+                        rotateAds();
             map.setView([25.0, 45.0], 4);
             console.log('✅ I need... v5.0 Firebase Ready!');
             console.log('💾 Providers:', serviceProviders.length);
