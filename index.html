@@ -1016,10 +1016,10 @@
         let adminPassword = 'admin123';
 
         const advertisements = [
-    { id: 1, text: '📢 أعلن هنا - إعلانك يوصل لآلاف المستخدمين', link: 'mailto:eyadrmh@gmail.com' },
-    { id: 2, text: '🔧 محتاج سباك؟ ابحث في ineedyour.com', link: 'https://ineedyour.com' },
-    { id: 3, text: '📝 سجل خدمتك مجاناً وليشاهدك الجميع', link: 'https://ineedyour.com' },
-    { id: 4, text: '🌍 منصة الخدمات الأولى في الأردن', link: 'https://ineedyour.com' }
+    { id: 1, text: '🕌 بسم الله الرحمن الرحيم - سبحان الله وبحمده', link: 'https://ineedyour.com' },
+    { id: 2, text: '🎓 منصة ineedyour.com تهنئ طلبة الثانوية العامة (التوجيهي) بنجاحهم وتتمنى لهم مستقبلاً مشرقاً', link: 'https://ineedyour.com' },
+    { id: 3, text: '🔍 زوروا منصة lostandfoundpro.com لإرجاع المفقودات حول العالم', link: 'https://lostandfoundpro.com' },
+    { id: 4, text: '😊 منصة ineedyour.com تتمنى لكم أياماً سعيدة', link: 'https://ineedyour.com' }
 ];
 let currentAdIndex = 0;
         const cityCoordinates = {
@@ -2337,12 +2337,20 @@ document.addEventListener('keydown', (e) => {
         document.getElementById('searchBtn').addEventListener('click', applyFilters);
         document.getElementById('searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilters(); });
 
-       function rotateAds() {
+       const adColors = ['#4285F4', '#8e44ad', '#e94560', '#25D366'];
+
+function rotateAds() {
     const adBanner = document.getElementById('adBanner');
     if (!adBanner) return;
     const ad = advertisements[currentAdIndex];
-    adBanner.innerHTML = ad.text;
-    adBanner.onclick = () => window.open(ad.link, '_blank');
+    adBanner.style.opacity = '0';
+    setTimeout(() => {
+        adBanner.innerHTML = ad.text;
+        adBanner.style.background = `linear-gradient(135deg, ${adColors[currentAdIndex]}, #1a1a2e)`;
+        adBanner.style.transition = 'opacity 0.5s';
+        adBanner.style.opacity = '1';
+        adBanner.onclick = () => window.open(ad.link, '_blank');
+    }, 500);
     currentAdIndex = (currentAdIndex + 1) % advertisements.length;
 }
 
