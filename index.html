@@ -2366,9 +2366,12 @@ setInterval(rotateAds, 10000);
         // بدء التشغيل
         // ============================================
                 async function init() {
-            populateCountryFilter();
-            setupSuggestions();
-            await loadProvidersFromFirebase();
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(() => console.log('✅ Service Worker مسجل')).catch(err => console.log('خطأ:', err));
+    }
+    populateCountryFilter();
+    setupSuggestions();
+    await loadProvidersFromFirebase();
                         rotateAds();
             map.setView([25.0, 45.0], 4);
             console.log('✅ I need... v5.0 Firebase Ready!');
