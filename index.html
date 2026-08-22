@@ -2369,6 +2369,11 @@ setInterval(rotateAds, 10000);
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').then(() => console.log('✅ Service Worker مسجل')).catch(err => console.log('خطأ:', err));
     }
+    if (!localStorage.getItem('installPromptShown') && window.innerWidth <= 1024) {
+        setTimeout(() => {
+            document.getElementById('installPrompt').style.display = 'block';
+        }, 3000);
+    }
     populateCountryFilter();
     setupSuggestions();
     await loadProvidersFromFirebase();
@@ -2380,6 +2385,18 @@ setInterval(rotateAds, 10000);
         }
         init();
     </script>
+        <div id="installPrompt" style="display:none;position:fixed;bottom:0;right:0;left:0;background:white;padding:15px;box-shadow:0 -4px 20px rgba(0,0,0,0.2);z-index:9999;border-radius:15px 15px 0 0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="font-size:2rem;">📱</span>
+        <div>
+            <strong>أضف التطبيق لشاشتك الرئيسية!</strong>
+            <p style="font-size:0.8rem;color:#666;margin:0;">اضغط ⋮ (3 نقاط) ثم "تثبيت التطبيق"</p>
+        </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('installPrompt').style.display='none';localStorage.setItem('installPromptShown','true');" style="flex:1;padding:12px;border:none;border-radius:20px;background:#4285F4;color:white;font-weight:700;cursor:pointer;">فهمت ✓</button>
+    </div>
+</div>
 </body>
 </html>
 
