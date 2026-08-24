@@ -117,7 +117,12 @@
     display: block;
     animation: fadeIn 0.2s ease;
 }
-@keyframes fadeIn {
+@keyframes pulseInstall {
+    0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+    70% { box-shadow: 0 0 0 12px rgba(255, 215, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+}
+        @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
@@ -439,6 +444,7 @@
         <!-- العمود الأيسر -->
         <div class="left-panel">
             <div class="lang-bar" id="langBar">
+                <button id="installBtn" onclick="installApp()" style="padding:8px 12px;border-radius:20px;border:2px solid #ffd700;background:#fff3cd;font-weight:700;cursor:pointer;animation:pulseInstall 2s infinite;margin-right:5px;">📥 ثبّت التطبيق</button>
     <div class="lang-select-wrapper">
         <button class="lang-select-btn" id="langSelectBtn" type="button">
             <span id="currentLangDisplay">🇸🇦 العربية</span>
@@ -2365,7 +2371,34 @@ setInterval(rotateAds, 10000);
         // ============================================
         // بدء التشغيل
         // ============================================
-                async function init() {
+        let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+});
+
+async function installApp() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+        if (result.outcome === 'accepted') {
+            document.getElementById('installBtn').style.display = 'none';
+            localStorage.setItem('appInstalled', 'true');
+        }
+        deferredPrompt = null;
+    } else {
+        alert('📥 لتثبيت التطبيق: اضغط ⋮ ثم "تثبيت التطبيق"');
+    }
+}
+
+if (localStorage.getItem('appInstalled') === 'true') {
+    window.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('installBtn');
+        if (btn) btn.style.display = 'none';
+    });
+}        
+        async function init() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').then(() => console.log('✅ Service Worker مسجل')).catch(err => console.log('خطأ:', err));
     }
