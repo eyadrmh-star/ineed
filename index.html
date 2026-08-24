@@ -2378,9 +2378,9 @@ document.addEventListener('keydown', (e) => {
         closeLangDropdown();
     }
 });
-        document.getElementById('searchBtn').addEventListener('click', applyFilters);
-        document.getElementById('searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilters(); });
 
+document.getElementById('searchBtn').addEventListener('click', applyFilters);
+document.getElementById('searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilters(); });
 
 const adColors = ['#4285F4', '#8e44ad', '#e94560', '#25D366', '#f5a623'];
 
@@ -2404,11 +2404,8 @@ function rotateAds() {
 }
 
 setInterval(rotateAds, 10000);
-        
-        // ============================================
-        // بدء التشغيل
-        // ============================================
-        let deferredPrompt = null;
+
+let deferredPrompt = null;
 
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -2435,8 +2432,9 @@ if (localStorage.getItem('appInstalled') === 'true') {
         const btn = document.getElementById('installBtn');
         if (btn) btn.style.display = 'none';
     });
-}        
-        async function init() {
+}
+
+async function init() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').then(() => console.log('✅ Service Worker مسجل')).catch(err => console.log('خطأ:', err));
     }
@@ -2444,13 +2442,13 @@ if (localStorage.getItem('appInstalled') === 'true') {
     populateCountryFilter();
     setupSuggestions();
     await loadProvidersFromFirebase();
-                        rotateAds();
-            map.setView([25.0, 45.0], 4);
-            console.log('✅ I need... v5.0 Firebase Ready!');
-            console.log('💾 Providers:', serviceProviders.length);
-            
-        }
-        init();
+    rotateAds();
+    map.setView([25.0, 45.0], 4);
+    console.log('✅ I need... v5.0 Firebase Ready!');
+    console.log('💾 Providers:', serviceProviders.length);
+}
+
+init();
     </script>
         
             
