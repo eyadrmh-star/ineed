@@ -675,6 +675,9 @@
     <div class="stat-card"><div class="stat-number" id="statVisitors">0</div><div class="stat-label" id="statVisitorsLabel">زائر</div></div>
     <div class="stat-card"><div class="stat-number" id="statCountries">0</div><div class="stat-label" id="statCountriesLabel">دولة</div></div>
     <div class="stat-card"><div class="stat-number" id="statVisitorsToday">0</div><div class="stat-label" id="statVisitorsTodayLabel">زيارات اليوم</div></div>
+<div class="stat-card"><div class="stat-number" id="statInstallations">0</div><div class="stat-label">📥 تثبيتات</div></div>
+<div class="stat-card"><div class="stat-number" id="statMobile">0</div><div class="stat-label">📱 جوال</div></div>
+<div class="stat-card"><div class="stat-number" id="statDesktop">0</div><div class="stat-label">💻 كمبيوتر</div></div>
 </div>
 <div class="stats-row" id="adminStats2">
     <div class="stat-card"><div class="stat-number" id="statTopCity" style="font-size:1rem;">—</div><div class="stat-label">أكثر مدينة</div></div>
@@ -1417,10 +1420,12 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
             }
         }
 
-        // ============================================
+       // ============================================
         // 👀 عداد الزوار (Firebase)
         // ============================================
         async function updateVisitorCount() {
+    trackDeviceType();
+    
     const docRef = db.collection('stats').doc('visitors');
     const doc = await docRef.get();
     if (doc.exists) {
@@ -1443,7 +1448,6 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
         await dailyRef.set({ [today]: 1 });
     }
 }
-
         // ============================================
         // عرض النتائج
         // ============================================
@@ -1856,6 +1860,28 @@ alert(t.successMsg);
         document.getElementById('closeAdminPanel').addEventListener('click', () => { adminPanelModal.classList.remove('show'); });
         adminPanelModal.addEventListener('click', e => { if (e.target === adminPanelModal) adminPanelModal.classList.remove('show'); });
 
+        async function trackInstallation() {
+    const ref = db.collection('stats').doc('installations');
+    const doc = await ref.get();
+    if (doc.exists) await ref.update({ count: (doc.data().count || 0) + 1 });
+    else await ref.set({ count: 1 });
+}
+
+function trackDeviceType() {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const ref = db.collection('stats').doc('devices');
+    ref.get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            const field = isMobile ? 'mobile' : 'desktop';
+            ref.update({ [field]: (data[field] || 0) + 1 });
+        } else {
+            ref.set({ mobile: isMobile ? 1 : 0, desktop: isMobile ? 0 : 1 });
+        }
+    });
+}
+
+async function updateAdminStats() {
         function updateAdminStats() {
     document.getElementById('statProviders').textContent = serviceProviders.length;
     document.getElementById('statVerified').textContent = serviceProviders.filter(p => p.verified).length;
@@ -1896,6 +1922,17 @@ alert(t.successMsg);
     const totalCount = serviceProviders.reduce((sum, p) => sum + (p.ratingCount || 0), 0);
     const avgRating = totalCount > 0 ? (totalRating / totalCount).toFixed(1) : 0;
     document.getElementById('statAvgRating').textContent = `⭐ ${avgRating}`;
+    
+    db.collection('stats').doc('installations').get().then(doc => {
+        document.getElementById('statInstallations').textContent = doc.exists ? (doc.data().count || 0) : 0;
+    });
+    db.collection('stats').doc('devices').get().then(doc => {
+        if (doc.exists) {
+            const d = doc.data();
+            document.getElementById('statMobile').textContent = d.mobile || 0;
+            document.getElementById('statDesktop').textContent = d.desktop || 0;
+        }
+    });
 }
 
         function populateAdminTable() {
@@ -2383,9 +2420,10 @@ async function installApp() {
         deferredPrompt.prompt();
         const result = await deferredPrompt.userChoice;
         if (result.outcome === 'accepted') {
-            document.getElementById('installBtn').style.display = 'none';
-            localStorage.setItem('appInstalled', 'true');
-        }
+    document.getElementById('installBtn').style.display = 'none';
+    localStorage.setItem('appInstalled', 'true');
+    trackInstallation();
+}
         deferredPrompt = null;
     } else {
         alert('📥 لتثبيت التطبيق: اضغط ⋮ ثم "تثبيت التطبيق"');
