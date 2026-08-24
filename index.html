@@ -2366,15 +2366,10 @@ setInterval(rotateAds, 10000);
         // بدء التشغيل
         // ============================================
                 async function init() {
-    if ('serviceWorker' in navigator) {
+    ظif ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').then(() => console.log('✅ Service Worker مسجل')).catch(err => console.log('خطأ:', err));
     }
-    let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
     
-});
     populateCountryFilter();
     setupSuggestions();
     await loadProvidersFromFirebase();
@@ -2387,14 +2382,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
         init();
     </script>
         
-            <strong>أضف التطبيق لشاشتك الرئيسية!</strong>
-            <p style="font-size:0.8rem;color:#666;margin:0;">اضغط ⋮ (3 نقاط) ثم "تثبيت التطبيق"</p>
-        </div>
-    </div>
-    <div style="display:flex;gap:8px;">
-        <button onclick="installApp()" style="flex:1;padding:12px;border:none;border-radius:20px;background:#4285F4;color:white;font-weight:700;cursor:pointer;">تثبيت الآن ✓</button>
-    </div>
-</div>
+            
 </body>
 </html>
 
