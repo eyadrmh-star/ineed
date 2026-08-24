@@ -1882,7 +1882,6 @@ function trackDeviceType() {
 }
 
 async function updateAdminStats() {
-        function updateAdminStats() {
     document.getElementById('statProviders').textContent = serviceProviders.length;
     document.getElementById('statVerified').textContent = serviceProviders.filter(p => p.verified).length;
     document.getElementById('statPremium').textContent = serviceProviders.filter(p => p.premium).length;
