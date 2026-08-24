@@ -2373,11 +2373,7 @@ setInterval(rotateAds, 10000);
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    if (!localStorage.getItem('installPromptShown') && window.innerWidth <= 1024) {
-        setTimeout(() => {
-            document.getElementById('installPrompt').style.display = 'block';
-        }, 3000);
-    }
+    
 });
     populateCountryFilter();
     setupSuggestions();
@@ -2390,10 +2386,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
         }
         init();
     </script>
-        <div id="installPrompt" style="display:none;position:fixed;bottom:0;right:0;left:0;background:white;padding:15px;box-shadow:0 -4px 20px rgba(0,0,0,0.2);z-index:9999;border-radius:15px 15px 0 0;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <span style="font-size:2rem;">📱</span>
-        <div>
+        
             <strong>أضف التطبيق لشاشتك الرئيسية!</strong>
             <p style="font-size:0.8rem;color:#666;margin:0;">اضغط ⋮ (3 نقاط) ثم "تثبيت التطبيق"</p>
         </div>
