@@ -2420,10 +2420,10 @@ async function installApp() {
         deferredPrompt.prompt();
         const result = await deferredPrompt.userChoice;
         if (result.outcome === 'accepted') {
-    document.getElementById('installBtn').style.display = 'none';
-    localStorage.setItem('appInstalled', 'true');
-    trackInstallation();
-}
+            document.getElementById('installBtn').style.display = 'none';
+            localStorage.setItem('appInstalled', 'true');
+            trackInstallation();
+        }
         deferredPrompt = null;
     } else {
         alert('📥 لتثبيت التطبيق: اضغط ⋮ ثم "تثبيت التطبيق"');
