@@ -2409,6 +2409,10 @@ setInterval(rotateAds, 10000);
 
 let deferredPrompt = null;
 
+window.addEventListener('appinstalled', () => {
+    trackInstallation();
+});
+
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
