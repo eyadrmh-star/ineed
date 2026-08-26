@@ -1297,9 +1297,7 @@ let currentAdIndex = 0;
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap', maxZoom: 19
 }).addTo(map);
-            attribution: '&copy; CARTO', maxZoom: 19
-        }).addTo(map);
-        const markersLayer = L.layerGroup().addTo(map);
+const markersLayer = L.layerGroup().addTo(map);
         let userMarker = null, userCircle = null;
 
         // ============================================
