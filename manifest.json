@@ -1,0 +1,16 @@
+{
+  "name": "I Need...",
+  "short_name": "I Need",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/QC5hwJbP/shʿar-akhyr.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#e8f0fe",
+  "theme_color": "#4285F4"
+}
