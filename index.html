@@ -1791,11 +1791,23 @@ lng: regLng || (cityCoordinates[document.getElementById('regCity').value] ? city
 };
             await db.collection('providers').add(newProvider);
 await logActivity(`📝 تسجيل مزود جديد: ${newProvider.name}`);
-    fetch('https://ineedyour.com/send_email.php', {
+
+// إيميل ترحيبي للمزود الجديد
+fetch('https://ineedyour.com/send_email.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `to=${encodeURIComponent(newProvider.email)}&name=${encodeURIComponent(newProvider.name)}&profession=${encodeURIComponent(newProvider.profession1)}&city=${encodeURIComponent(newProvider.city)}`
-}).then(res => res.json()).then(data => console.log('📧 إيميل:', data)).catch(err => console.log('خطأ إيميل:', err));
+    body: `type=welcome&to=${encodeURIComponent(newProvider.email)}&name=${encodeURIComponent(newProvider.name)}&profession=${encodeURIComponent(newProvider.profession1)}&city=${encodeURIComponent(newProvider.city)}`
+}).catch(err => console.log('خطأ إيميل:', err));
+
+// إيميل جماعي لمزودي نفس المدينة
+const sameCityProviders = serviceProviders.filter(p => p.email && p.email !== newProvider.email && p.city && p.city.toLowerCase() === newProvider.city.toLowerCase());
+sameCityProviders.forEach(p => {
+    fetch('https://ineedyour.com/send_email.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `type=city_notification&to=${encodeURIComponent(p.email)}&name=${encodeURIComponent(newProvider.name)}&profession=${encodeURIComponent(newProvider.profession1)}&city=${encodeURIComponent(newProvider.city)}`
+    }).catch(err => console.log('خطأ إيميل جماعي:', err));
+});
     
 alert(t.successMsg);
             this.reset();
