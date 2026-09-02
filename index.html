@@ -1477,7 +1477,6 @@ editCountryFilter.addEventListener('change', () => populateEditCityFilter(editCo
                 const country = countriesData.find(c => c.code === p.country);
                 const cName = country ? (currentLang === 'ar' ? country.nameAr : country.name) : p.country;
                 const avatar = p.verified ? `<span style="width:auto;padding:8px 14px;border-radius:20px;background:#1da1f2;color:white;font-weight:800;font-size:0.7rem;display:inline-flex;align-items:center;justify-content:center;">✓ موثوق</span>` : `<span style="width:50px;height:50px;border-radius:50%;background:#4285F4;color:white;font-weight:800;font-size:1.4rem;display:flex;align-items:center;justify-content:center;">${p.name.charAt(0)}</span>`;
-                const verified = p.verified ? `<span class="verified-badge">${t.verified}</span>` : '';
                 let profs = `<span class="prof-tag">${p.profession1}</span>`;
                 if (p.profession2) profs += `<span class="prof-tag">${p.profession2}</span>`;
                 const avgRating = (p.rating / (p.ratingCount || 1)).toFixed(1);
